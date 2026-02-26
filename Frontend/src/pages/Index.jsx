@@ -75,14 +75,6 @@ const Index = () => {
                     </div>
                 )}
             </main>
-
-            <footer className="border-t border-border py-6">
-                <div className="max-w-[1200px] mx-auto px-6 text-center">
-                    <p className="text-xs text-muted-foreground">
-                        Title Similarity & Compliance Validation System — Regulatory AI Platform
-                    </p>
-                </div>
-            </footer>
         </div>
     );
 };

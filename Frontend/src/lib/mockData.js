@@ -37,13 +37,7 @@ const mockResults = {
     },
 };
 
-export const recentChecks = [
-    { title: "National Tribune Weekly", status: "Rejected", probability: 12, timestamp: "2 min ago" },
-    { title: "The Civic Observer", status: "Approved", probability: 91, timestamp: "8 min ago" },
-    { title: "Metro Daily Express", status: "Rejected", probability: 24, timestamp: "15 min ago" },
-    { title: "Sentinel Post", status: "Approved", probability: 87, timestamp: "22 min ago" },
-    { title: "Morning Herald Daily", status: "Rejected", probability: 18, timestamp: "31 min ago" },
-];
+export const recentChecks = [];
 
 export function getMockResult(title) {
     const lower = title.toLowerCase();

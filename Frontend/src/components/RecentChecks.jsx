@@ -1,4 +1,4 @@
-import { CheckCircle2, XCircle, History, Trash2 } from "lucide-react";
+import { CheckCircle2, XCircle, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -6,8 +6,7 @@ const RecentChecks = ({ checks, onClearAll }) => {
     return (
         <Card className="border-border bg-card shadow-sm backdrop-blur-xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
-                    <History className="w-5 h-5 text-primary" />
+                <CardTitle className="text-lg font-semibold text-foreground">
                     Recent Verifications
                 </CardTitle>
                 {checks.length > 0 && onClearAll && (
