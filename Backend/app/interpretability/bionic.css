@@ -1,0 +1,40 @@
+/* TRUE Bionic Reading Extension Styles - Based on Official Implementation */
+
+/* Fixation styling - the core of Bionic Reading */
+.bionic-fixation {
+  font-weight: 600 !important;
+  color: inherit !important;
+  /* Softer, more natural bolding */
+  text-rendering: optimizeLegibility !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Enhanced wrapper styling with proper text selection */
+.bionic-wrapper {
+  display: inline;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+}
+
+/* Main bionic reading state */
+.bionic-reading-enabled .bionic-fixation {
+  font-weight: 600 !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+}
+
+/* Print styles */
+@media print {
+  .bionic-fixation {
+    font-weight: 700 !important;
+    opacity: 1 !important;
+    color: #000 !important;
+  }
+}
