@@ -15,6 +15,10 @@ TEST_CASES = [
     "Daily Evening",                 # Translation control
     "Hindustan Times\u2002",         # Unicode en-space bypass attempt
     "Hindustan\u202DTimes",          # Unicode direction override bypass attempt
+    "hindustantimes",                # Space bypass
+    "hindustan-times",               # Hyphen bypass
+    "HindustanTimes",                # CamelCase bypass
+    "hindustan times ltd",           # Pre/Suffix containment bypass
 ]
 
 print("=== STARTING STRESS TEST SUITE ===")

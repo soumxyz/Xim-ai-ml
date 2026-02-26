@@ -31,3 +31,24 @@ class NormalizationPipeline:
         
         # Join and normalize whitespace
         return " ".join(tokens)
+
+    def canonical_form(self, text: str) -> str:
+        """
+        Calculates the canonical space-agnostic form of a title.
+        Prevents space removal & hyphen removal attacks (e.g. 'HindustanTimes').
+        """
+        import unicodedata
+        
+        if not text:
+            return ""
+            
+        # Lowercase
+        text = text.lower().strip()
+
+        # Unicode normalization (NFKC)
+        text = unicodedata.normalize("NFKC", text)
+
+        # Remove all non-alphanumeric characters (stripping spaces, hyphens, etc)
+        text = re.sub(r'[^a-z0-9]', '', text)
+
+        return text

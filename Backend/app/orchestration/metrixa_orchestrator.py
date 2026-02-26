@@ -88,6 +88,64 @@ class MetrixaOrchestrator:
         # 2. Fetch existing titles for combination detection
         existing_titles = await self.repo.get_all_titles()
         
+        # 2.5. Canonical Concatenation / Containment Check (Pre-Token Index Override)
+        input_canon = self.normalizer.canonical_form(title)
+        for cand_dict in existing_titles:
+            cand_title = cand_dict.get("title", "")
+            
+            # Avoid processing empty or minimal length titles
+            if len(cand_title) < 2:
+                continue
+                
+            cand_canon = cand_dict.get("canonical_title", "")
+            
+            # Length-aware substring and exact match check to prevent small substring noise
+            if (input_canon == cand_canon or 
+                (len(cand_canon) > 12 and cand_canon in input_canon) or 
+                (len(input_canon) > 12 and input_canon in cand_canon)):
+                
+                elapsed_ms = int((time.time() - start_time) * 1000)
+                
+                analysis_detail = AnalysisDetail(
+                    lexical_similarity=100,
+                    phonetic_similarity=100,
+                    semantic_similarity=100,
+                    disallowed_word=False,
+                    periodicity_violation=False,
+                    combination_violation=True,
+                    prefix_suffix_violation=False
+                )
+                
+                self.logger.info(f"Concatenation clash. '{title}' bypassed spacing but matched '{cand_title}'.")
+                
+                return ComplianceResult(
+                    is_compliant=False,
+                    verification_probability=0.0,
+                    decision="Reject",
+                    explanation=f"Concatenation duplicate detected. Space-agnostic string completely overlaps with existing title '{cand_title}'.",
+                    conflicts=[ConflictDetail(
+                        title=cand_title,
+                        conflict_type="Lexical",
+                        similarity_score=1.0,
+                        highlighted_text=f'<span class="bionic-wrapper">{title}</span>'
+                    )],
+                    scores={
+                        "semantic_similarity": 1.0,
+                        "lexical_similarity": 1.0,
+                        "phonetic_similarity": 1.0
+                    },
+                    analysis=analysis_detail,
+                    metadata={
+                        "risk_tier": "Critical",
+                        "dominant_signal": "Space Bypass / Concatenation",
+                        "confidence_score": 1.0,
+                        "structural_patterns": [],
+                        "processing_time_ms": elapsed_ms,
+                        "candidates_checked": len(existing_titles),
+                        "best_match": cand_title
+                    }
+                )
+        
         # 3. Compliance check (Deterministic + Combination)
         compliance_res = await self.compliance.check_compliance(title, existing_titles)
         
@@ -147,6 +205,7 @@ class MetrixaOrchestrator:
         
         # Score candidates
         query_norm = self.transliteration_normalizer.normalize(title)
+        query_canonical = self.normalizer.canonical_form(title)
         
         for candidate in candidates[:50]:
             candidate_title = candidate.get("title", "")
@@ -155,14 +214,16 @@ class MetrixaOrchestrator:
             query_lower = unicodedata.normalize('NFKC', title).strip().lower()
             cand_lower = unicodedata.normalize('NFKC', candidate_title).strip().lower()
             cand_norm = self.transliteration_normalizer.normalize(candidate_title)
+            cand_canonical = self.normalizer.canonical_form(candidate_title)
             
             # Semantic (Concept Clusters)
             sem_sim = calculate_concept_similarity(query_norm, cand_norm)
             
-            # Lexical (Fuzzy Token Set) - Take max of original vs transliterated
+            # Lexical (Fuzzy Token Set) - Take max of original vs transliterated vs space-stripped
             lex_orig = fuzz.token_set_ratio(query_lower, cand_lower) / 100.0
             lex_norm = fuzz.token_set_ratio(query_norm, cand_norm) / 100.0
-            lex_sim = max(lex_orig, lex_norm)
+            lex_canon = fuzz.token_set_ratio(query_canonical, cand_canonical) / 100.0
+            lex_sim = max(lex_orig, lex_norm, lex_canon)
             
             # Phonetic (Double Metaphone) - Take max of original vs transliterated
             pho_orig = await self.phonetic.calculate_similarity(query_lower, cand_lower)

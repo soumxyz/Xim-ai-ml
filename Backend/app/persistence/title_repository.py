@@ -8,7 +8,7 @@ class TitleRepository:
     def __init__(self):
         self.logger = logging.getLogger("metrixa")
         self.csv_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'sample_titles.csv')
-        self.json_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'Dataset.json')
+        self.json_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'Database.json')
 
     async def get_all_titles(self) -> list:
         """
@@ -25,6 +25,8 @@ class TitleRepository:
         if os.path.exists(json_abs):
             try:
                 import json
+                import unicodedata
+                import re
                 with open(json_abs, 'r', encoding='utf-8') as f:
                     for line in f:
                         if not line.strip(): continue
@@ -33,7 +35,8 @@ class TitleRepository:
                         titles.append({
                             "id": row.get("id", len(titles)),
                             "title": title,
-                            "normalized_title": row.get("normalized_title", title.lower())
+                            "normalized_title": row.get("normalized_title", title.lower()),
+                            "canonical_title": re.sub(r'[^a-z0-9]', '', unicodedata.normalize('NFKC', title).lower().strip())
                         })
                 TitleRepository._titles_cache = titles
                 self.logger.info(f"Loaded {len(titles)} titles from Dataset.json.")
