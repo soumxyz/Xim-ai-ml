@@ -1,6 +1,4 @@
-import { CheckCircle2, XCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import ProbabilityGauge from "./ProbabilityGauge";
 
 const VerificationResults = ({ result }) => {
@@ -13,33 +11,13 @@ const VerificationResults = ({ result }) => {
                     {/* Left: Info */}
                     <div className="flex-1 space-y-5 w-full">
                         <div className="flex flex-wrap items-center gap-3">
-                            <h2 className="text-lg font-semibold text-foreground">Verification Result</h2>
-                            <Badge
-                                variant="outline"
-                                className={`
-                                    ${isApproved ? "border-success text-success bg-success/10" : ""}
-                                    ${result.status === "Rejected" ? "border-destructive text-destructive bg-destructive/10" : ""}
-                                    ${result.status === "Manual Review" ? "border-yellow-500 text-yellow-600 bg-yellow-500/10" : ""}
-                                `}
-                            >
-                                {isApproved && <CheckCircle2 className="w-3 h-3 mr-1" />}
-                                {result.status === "Rejected" && <XCircle className="w-3 h-3 mr-1" />}
-                                {result.status === "Manual Review" && <div className="w-2 h-2 rounded-full bg-yellow-500 mr-2" />}
+                            <h2 className="text-lg font-semibold text-foreground">Verification Result:</h2>
+                            <span className={`text-lg font-semibold ${isApproved ? "text-green-600 dark:text-green-400" :
+                                    result.status === "Rejected" ? "text-red-600 dark:text-red-400" :
+                                        "text-yellow-600 dark:text-yellow-400"
+                                }`}>
                                 {result.status}
-                            </Badge>
-                            {result.metadata?.risk_tier && (
-                                <Badge 
-                                    variant="secondary" 
-                                    className={`
-                                        ${result.metadata.risk_tier === 'Critical' ? 'bg-red-500/20 text-red-500 border-red-500/50' : ''}
-                                        ${result.metadata.risk_tier === 'High' ? 'bg-orange-500/20 text-orange-500 border-orange-500/50' : ''}
-                                        ${result.metadata.risk_tier === 'Medium' ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/50' : ''}
-                                        ${result.metadata.risk_tier === 'Low' ? 'bg-blue-500/20 text-blue-500 border-blue-500/50' : ''}
-                                    `}
-                                >
-                                    Risk: {result.metadata.risk_tier}
-                                </Badge>
-                            )}
+                            </span>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
