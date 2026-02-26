@@ -103,7 +103,10 @@ const Index = () => {
                                         closest_match: result.metadata?.best_match || "None",
                                         similarity_score: result.analysis ? Math.max(result.analysis.lexical_similarity, result.analysis.phonetic_similarity, result.analysis.semantic_similarity) : 0
                                     }} />
-                                    <DetailedAnalysis analysis={result.analysis} />
+                                    <DetailedAnalysis analysis={{
+                                        ...result.analysis,
+                                        dominant_signal: result.metadata?.dominant_signal
+                                    }} />
                                 </div>
                                 <div className="space-y-6">
                                     <ExplanationPanel explanation={result.explanation} />

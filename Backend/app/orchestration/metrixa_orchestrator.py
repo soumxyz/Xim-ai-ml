@@ -88,27 +88,37 @@ class MetrixaOrchestrator:
                 metadata={"risk_tier": "Low", "processing_time_ms": elapsed_ms, "candidates_checked": 0}
             )
         
-        # 6. Deep Fuzzy Comparison on Candidates (using rapidfuzz)
+        # 6. Deep Comparison on Candidates (Hybrid Intelligence)
         from rapidfuzz import fuzz
+        from app.intelligence.concept_clusters import calculate_concept_similarity
+        
         best_match = None
         best_similarity = 0.0
         all_conflicts = []
         best_scores = {}
         
-        # Score candidates using high-speed fuzzy matching
-        for candidate in candidates[:50]:  # Check up to 50 candidates
+        # Determine weighting based on title length (Adaptive Weighting)
+        words_count = len(title.split())
+        w_lex = 0.6 if words_count > 3 else 0.4
+        w_pho = 0.3 if words_count > 3 else 0.5
+        w_sem = 0.1 # Base semantic weight for cluster/MiniLM
+        
+        # Score candidates
+        for candidate in candidates[:50]:
             candidate_title = candidate.get("title", "")
             
-            # Semantic search is disabled to prevent segfaults; using fuzzy as proxy
-            sem_sim = 0.0 
+            # Tier 3: Semantic (Safe Concept Cluster Boost)
+            # Replaced torch-based MiniLM with stable Concept Clusters for ARM64 stability
+            sem_sim = calculate_concept_similarity(title, candidate_title)
             
-            # High-performance lexical similarity via RapidFuzz
+            # High-performance lexical similarity
             lex_sim = fuzz.token_set_ratio(title, candidate_title) / 100.0
-            lex_sim_simple = fuzz.ratio(title, candidate_title) / 100.0
-            lex_sim = max(lex_sim, lex_sim_simple) # Take best of set vs ratio
             
-            # Phonetic similarity fallback
+            # Phonetic similarity
             pho_sim = await self.phonetic.calculate_similarity(title, candidate_title)
+            
+            # Blend score with Adaptive Weights
+            final_sim = (lex_sim * w_lex) + (pho_sim * w_pho) + (sem_sim * w_sem)
             
             scores = {
                 "semantic_similarity": sem_sim,
@@ -116,16 +126,20 @@ class MetrixaOrchestrator:
                 "phonetic_similarity": pho_sim
             }
             
-            # Dynamic weighting (Lexical + Phonetic focus)
-            final_sim = (lex_sim * 0.7) + (pho_sim * 0.3)
-            
-            # Track conflicts above threshold
-            if final_sim > 0.65: # Tighter threshold for lexical matches
+            # Track conflicts for Bionic Highlighter (Red/Orange/Yellow)
+            if final_sim > 0.60:
+                conflict_data = {
+                    "tokens": list(set(title.lower().split()) & set(candidate_title.lower().split())),
+                    "rules": compliance_res.get("violations_terms", []),
+                    "phonetic": [doublemetaphone(w)[0] for w in candidate_title.split()]
+                }
+                highlighted = self.highlighter.highlight(title, conflict_data)
+                
                 all_conflicts.append(ConflictDetail(
                     title=candidate_title,
-                    conflict_type="Lexical/Fuzzy",
+                    conflict_type="Lexical" if lex_sim > pho_sim else "Phonetic",
                     similarity_score=round(final_sim, 4),
-                    highlighted_text=candidate_title # Simple highlight for now
+                    highlighted_text=highlighted
                 ))
             
             if final_sim > best_similarity:
@@ -137,12 +151,20 @@ class MetrixaOrchestrator:
         if not compliance_res["is_compliant"] and compliance_res["penalty_score"] >= 1.0:
             best_similarity = 1.0
         
-        # 8. Decision
+        # 8. Decision & Risk Tiering
         confidence = self.confidence_scorer.calculate_confidence(best_scores)
         prob = self.probability.compute_probability(best_similarity)
         decision_meta = self.decision.categorize_decision(
             best_similarity, compliance_res["is_compliant"], confidence
         )
+        
+        # Calculate Dominant Signal
+        dominant_val = max(best_scores.values()) if best_scores else 0
+        dominant_signal = "None"
+        if dominant_val > 0:
+            if best_scores.get("lexical_similarity") == dominant_val: dominant_signal = "Lexical Overlap"
+            elif best_scores.get("phonetic_similarity") == dominant_val: dominant_signal = "Phonetic Deception"
+            elif best_scores.get("semantic_similarity") == dominant_val: dominant_signal = "Conceptual Similarity"
         
         # 9. Explanation
         explanation = self.explainer.build_explanation(compliance_res, best_scores, decision_meta["decision"])
@@ -177,6 +199,7 @@ class MetrixaOrchestrator:
             analysis=analysis_detail,
             metadata={
                 "risk_tier": decision_meta["risk_tier"],
+                "dominant_signal": dominant_signal,
                 "confidence_score": round(confidence, 4),
                 "structural_patterns": patterns,
                 "processing_time_ms": elapsed_ms,

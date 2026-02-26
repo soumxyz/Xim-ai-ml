@@ -24,65 +24,39 @@ class BionicConflictHighlighter:
         """Computes font-weight based on coverage (intensity)."""
         return round(400 + (self.intensity * 500))
 
-    def _transform_word(self, word: str, force_bionic: bool = False) -> str:
-        """
-        Transforms a word into bionic format if it's a conflict token or forced.
-        Uses the fixation algorithm to bold the initial portion.
-        """
-        if len(word) < 2:
-            return word
-            
+    def _transform_word(self, word: str, conflict_type: str = "lexical") -> str:
+        """Transforms a word into bionic format with a color-coded span class."""
+        if len(word) < 2: return word
         clean_word = re.sub(r'[^a-zA-Z]', '', word)
-        if not clean_word:
-            return word
-            
+        if not clean_word: return word
         n = len(clean_word)
         is_function = clean_word.lower() in self.function_words
-        
-        # Determine bold ratio
         if n <= self.small_word_threshold:
             base_ratio = self.small_word_ratio
         else:
             base_ratio = self.function_word_ratio if is_function else self.content_word_ratio
-            
-        # Scale by intensity
         scaled_ratio = min(0.95, max(0.05, base_ratio * (0.5 + self.intensity)))
         bold_count = max(1, math.ceil(n * scaled_ratio))
-        
         weight = self._get_fixation_weight()
-        
-        # Construct bionic HTML
-        # Using <b> for legacy or <span class="bionic-fixation"> for advanced CSS
-        bold_part = word[:bold_count]
-        rest_part = word[bold_count:]
-        
-        return f'<span class="bionic-fixation" style="font-weight:{weight}">{bold_part}</span>{rest_part}'
+        span_class = f"bionic-fixation conflict-{conflict_type}"
+        return f'<span class="{span_class}" style="font-weight:{weight}">{word[:bold_count]}</span>{word[bold_count:]}'
 
     def highlight(self, text: str, conflicts: dict) -> str:
-        """
-        Applies bionic-style highlighting to conflict tokens.
-        """
+        """Applies bionic-style highlighting with conflict-aware coloring."""
         words = text.split()
         conflict_tokens = set([t.lower() for t in conflicts.get("tokens", [])])
         rule_violations = set([t.lower() for t in conflicts.get("rules", [])])
         phonetic_targets = set(conflicts.get("phonetic", []))
-        
         processed_words = []
         for word in words:
             clean = re.sub(r'[^a-zA-Z]', '', word).lower()
             m_code = doublemetaphone(clean)[0]
-            
-            is_conflict = (
-                clean in conflict_tokens or 
-                clean in rule_violations or 
-                m_code in phonetic_targets or
-                any(v in clean for v in rule_violations)
-            )
-            
-            if is_conflict:
-                processed_words.append(self._transform_word(word))
+            conflict_type = None
+            if clean in conflict_tokens: conflict_type = "lexical"
+            elif m_code in phonetic_targets: conflict_type = "phonetic"
+            elif clean in rule_violations or any(v in clean for v in rule_violations): conflict_type = "rule"
+            if conflict_type:
+                processed_words.append(self._transform_word(word, conflict_type))
             else:
                 processed_words.append(word)
-                
-        highlighted = " ".join(processed_words)
-        return f'<span class="bionic-wrapper">{highlighted}</span>'
+        return f'<span class="bionic-wrapper">{" ".join(processed_words)}</span>'
