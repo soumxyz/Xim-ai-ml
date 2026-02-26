@@ -61,9 +61,9 @@ class MetrixaOrchestrator:
                 combination_violation=False, prefix_suffix_violation=False
             )
             
-            # Government Soft-Fail Logic for Borderline Linguistic Cases
-            prob = 50.0 if q_risk == "Medium" else 0.0
-            decision = "Manual Review" if q_risk == "Medium" else "Rejected"
+            # Linguistic Quality Gate is considered a Hard Violation
+            prob = 0.0
+            decision = "Reject"
             
             return ComplianceResult(
                 is_compliant=False,
@@ -223,20 +223,49 @@ class MetrixaOrchestrator:
             lex_orig = fuzz.token_set_ratio(query_lower, cand_lower) / 100.0
             lex_norm = fuzz.token_set_ratio(query_norm, cand_norm) / 100.0
             lex_canon = fuzz.token_set_ratio(query_canonical, cand_canonical) / 100.0
-            lex_sim = max(lex_orig, lex_norm, lex_canon)
+            
+            # Sub-character 3-gram Match (against space-agnostic concatenation attacks)
+            ngram_sim = await self.lexical.calculate_ngram_similarity(title, candidate_title, n=3)
+            
+            lex_sim = max(lex_orig, lex_norm, lex_canon, ngram_sim)
             
             # Phonetic (Double Metaphone) - Take max of original vs transliterated
             pho_orig = await self.phonetic.calculate_similarity(query_lower, cand_lower)
             pho_norm = await self.phonetic.calculate_similarity(query_norm, cand_norm)
             pho_sim = max(pho_orig, pho_norm)
             
-            # Near-Duplicate Override
-            # If a strict deterministic match (> 0.95) exists, override the semantic penalty heavily.
-            if lex_sim > 0.95 and pho_sim > 0.95:
-                sem_sim = max(sem_sim, 0.95)
+            # -------------------------------------------------------------
+            # Multi-Signal Similarity Model (Max-Dominant Hybrid)
+            # -------------------------------------------------------------
+            # 1. Deterministic Dominant Core
+            sim_dominant = max(lex_sim, pho_sim)
             
-            # Blend score with Adaptive Weights
-            final_sim = (lex_sim * w_lex) + (pho_sim * w_pho) + (sem_sim * w_sem)
+            # 2. Semantic Dampening (Semantic only assists, doesn't weaken near-duplicates)
+            if sim_dominant < 0.95:
+                sim_final = 0.7 * sim_dominant + 0.3 * sem_sim
+            else:
+                sim_final = sim_dominant
+                
+            # 3. Containment Boost (controlled — 0.10 not 0.15)
+            # If the strings are functionally contained within each other, boost the similarity
+            # (Note: exact duplicates & canonical bypasses are already caught & rejected earlier)
+            containment_flag = 1 if (cand_lower in query_lower or query_lower in cand_lower) else 0
+            sim_boosted = min(1.0, sim_final + (0.10 * containment_flag))
+            
+            # 4. Adaptive Threshold by Title Length (gentle 1.03x, not 1.05x)
+            # Short titles represent a mathematically higher absolute risk of violation
+            if words_count <= 2:
+                sim_boosted = min(1.0, sim_boosted * 1.03)
+                
+            final_sim = sim_boosted
+            
+            # Debug logging: intermediate scores for diagnosing binary output
+            self.logger.debug(
+                f"SCORE '{title}' vs '{candidate_title}': "
+                f"L={lex_sim:.4f} Ph={pho_sim:.4f} Sem={sem_sim:.4f} "
+                f"dominant={sim_dominant:.4f} final={sim_final:.4f} "
+                f"contain={containment_flag} boosted={sim_boosted:.4f} → {final_sim:.4f}"
+            )
             
             scores = {
                 "semantic_similarity": sem_sim,
@@ -265,15 +294,20 @@ class MetrixaOrchestrator:
                 best_match = candidate_title
                 best_scores = scores
         
-        # 7. Compliance override
+        # 7. Compliance override (soft — preserves some gradation)
         if not compliance_res["is_compliant"] and compliance_res["penalty_score"] >= 1.0:
-            best_similarity = 1.0
+            best_similarity = max(best_similarity, 0.95)
         
         # 8. Decision & Risk Tiering
         confidence = self.confidence_scorer.calculate_confidence(best_scores)
-        prob = self.probability.compute_probability(best_similarity)
         decision_meta = self.decision.categorize_decision(
             best_similarity, compliance_res["is_compliant"], confidence
+        )
+        
+        prob = self.probability.compute_probability(
+            best_similarity, 
+            compliance_res["is_compliant"], 
+            decision_meta["decision"]
         )
         
         # Calculate Dominant Signal
@@ -281,7 +315,7 @@ class MetrixaOrchestrator:
         dominant_signal = "None"
         if dominant_val > 0:
             if best_scores.get("lexical_similarity") == dominant_val: dominant_signal = "Lexical Overlap"
-            elif best_scores.get("phonetic_similarity") == dominant_val: dominant_signal = "Phonetic Deception"
+            elif best_scores.get("phonetic_similarity") == dominant_val: dominant_signal = "Phonetic Similarity"
             elif best_scores.get("semantic_similarity") == dominant_val: dominant_signal = "Conceptual Similarity"
         
         # 9. Explanation
@@ -309,7 +343,7 @@ class MetrixaOrchestrator:
 
         result = ComplianceResult(
             is_compliant=compliance_res["is_compliant"] and decision_meta["decision"] != "Reject",
-            verification_probability=prob,
+            verification_probability=round(prob, 2),
             decision=decision_meta["decision"],
             explanation=explanation,
             conflicts=all_conflicts[:5],
