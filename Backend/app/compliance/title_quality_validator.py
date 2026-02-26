@@ -122,7 +122,7 @@ class TitleQualityValidator:
         if script == "latin":
             alpha_chars = [c.lower() for c in clean_title if c.isalpha()]
             if alpha_chars:
-                vowels = "aeiou"
+                vowels = "aeiouy" # Include 'y' as a valid vowel structural character
                 v_ratio = sum(c in vowels for c in alpha_chars) / len(alpha_chars)
                 if v_ratio >= 0.20:
                     linguistic_score += 0.3
