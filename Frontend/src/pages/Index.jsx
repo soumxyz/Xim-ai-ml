@@ -13,12 +13,14 @@ const Index = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [darkMode, setDarkMode] = useState(false);
+    const [highContrast, setHighContrast] = useState(false);
     const [checks, setChecks] = useState(initialChecks);
     const resultsRef = useRef(null);
 
     useEffect(() => {
         document.documentElement.classList.toggle("dark", darkMode);
-    }, [darkMode]);
+        document.documentElement.classList.toggle("high-contrast", highContrast);
+    }, [darkMode, highContrast]);
 
     const handleTitleChange = (newTitle) => {
         setTitle(newTitle);
@@ -110,7 +112,12 @@ const Index = () => {
                 }}
             />
             <div className="relative z-10">
-                <Navbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} />
+                <Navbar
+                    darkMode={darkMode}
+                    onToggleDarkMode={() => setDarkMode(!darkMode)}
+                    highContrast={highContrast}
+                    onToggleHighContrast={() => setHighContrast(!highContrast)}
+                />
 
                 <main className="max-w-[1200px] mx-auto px-6">
                     <HeroSection

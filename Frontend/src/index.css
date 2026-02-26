@@ -104,20 +104,78 @@
   .bionic-fixation {
     @apply inline;
   }
-  
+
   .conflict-lexical {
     @apply border-b-2 border-red-500/50 bg-red-500/10 text-red-500 dark:text-red-400 font-bold;
   }
-  
+
   .conflict-phonetic {
     @apply border-b-2 border-orange-500/50 bg-orange-500/10 text-orange-500 dark:text-orange-400 font-bold;
   }
-  
+
   .conflict-rule {
     @apply border-b-2 border-yellow-500/50 bg-yellow-500/10 text-yellow-500 dark:text-yellow-400 font-bold;
   }
-  
+
   .conflict-semantic {
     @apply border-b-2 border-blue-500/50 bg-blue-500/10 text-blue-500 dark:text-blue-400 font-bold;
   }
+}
+
+/* ── High Contrast Mode ───────────────────────────────────────────── */
+.high-contrast {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --border: 0 0% 0%;
+  --input: 0 0% 0%;
+  --muted: 0 0% 85%;
+  --muted-foreground: 0 0% 0%;
+  --primary: 45 100% 38%;
+  --primary-foreground: 0 0% 0%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+  --secondary: 0 0% 88%;
+  --secondary-foreground: 0 0% 0%;
+  --accent: 45 100% 38%;
+  --accent-foreground: 0 0% 0%;
+  --ring: 0 0% 0%;
+}
+
+.high-contrast.dark {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 0%;
+  --card-foreground: 0 0% 100%;
+  --border: 0 0% 100%;
+  --input: 0 0% 100%;
+  --muted: 0 0% 12%;
+  --muted-foreground: 0 0% 100%;
+  --primary: 45 100% 60%;
+  --primary-foreground: 0 0% 0%;
+  --popover: 0 0% 0%;
+  --popover-foreground: 0 0% 100%;
+  --secondary: 0 0% 12%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 45 100% 60%;
+  --accent-foreground: 0 0% 0%;
+  --ring: 0 0% 100%;
+}
+
+/* Solid, fully opaque surfaces in high contrast */
+.high-contrast * {
+  border-color: hsl(var(--border)) !important;
+}
+
+.high-contrast .bg-card\/70,
+.high-contrast [class*="bg-card"] {
+  background-color: hsl(var(--card)) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Remove the decorative grid background in high contrast */
+.high-contrast .absolute.inset-0.z-0 {
+  display: none !important;
 }
