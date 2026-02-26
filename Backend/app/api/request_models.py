@@ -11,6 +11,15 @@ class ConflictDetail(BaseModel):
     similarity_score: float
     highlighted_text: str # From Bionic layer
 
+class AnalysisDetail(BaseModel):
+    lexical_similarity: int
+    phonetic_similarity: int
+    semantic_similarity: int
+    disallowed_word: bool
+    periodicity_violation: bool
+    combination_violation: bool
+    prefix_suffix_violation: bool
+
 class ComplianceResult(BaseModel):
     is_compliant: bool
     verification_probability: float
@@ -18,6 +27,7 @@ class ComplianceResult(BaseModel):
     explanation: str
     conflicts: List[ConflictDetail]
     scores: Dict[str, float]
+    analysis: Optional[AnalysisDetail] = None
     metadata: Optional[Dict] = None
 
 class TitleSubmission(BaseModel):

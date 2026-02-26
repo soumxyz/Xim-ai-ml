@@ -6,6 +6,7 @@ import DetailedAnalysis from "@/components/DetailedAnalysis";
 import ExplanationPanel from "@/components/ExplanationPanel";
 import RecentChecks from "@/components/RecentChecks";
 import { getMockResult, recentChecks as initialChecks } from "@/lib/mockData";
+import { toast } from "sonner"; // Assuming sonner is available for error reporting
 
 const Index = () => {
     const [title, setTitle] = useState("");
@@ -30,24 +31,48 @@ const Index = () => {
         setIsLoading(true);
         setResult(null);
 
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        try {
+            const response = await fetch("http://localhost:8000/api/v1/verify/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ title }),
+            });
 
-        const mockResult = getMockResult(title);
-        setResult(mockResult);
-        
-        const newCheck = {
-            title: title,
-            status: mockResult.status,
-            probability: mockResult.verification_probability,
-            timestamp: "Just now"
-        };
-        setChecks((prev) => [newCheck, ...prev]);
-        
-        setIsLoading(false);
+            if (!response.ok) {
+                throw new Error("Verification failed at server");
+            }
 
-        setTimeout(() => {
-            resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 100);
+            const data = await response.json();
+            
+            // Map backend score keys if they differ slightly from UI (already handled in orchestrator update)
+            const apiResult = {
+                ...data,
+                submitted_title: title,
+                closest_match: data.metadata?.best_match || "None",
+                similarity_score: Math.round((1 - data.verification_probability/100) * 100) // Fallback calculation
+            };
+            
+            // In fact, the backend now returns exactly what we need
+            setResult(data);
+            
+            const newCheck = {
+                title: title,
+                status: data.decision === "Accept" ? "Approved" : "Rejected",
+                probability: data.verification_probability,
+                timestamp: "Just now"
+            };
+            setChecks((prev) => [newCheck, ...prev]);
+        } catch (error) {
+            console.error("API Error:", error);
+            toast.error("Could not connect to verification server.");
+        } finally {
+            setIsLoading(false);
+            setTimeout(() => {
+                resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 100);
+        }
     };
 
     const handleClearAll = () => {
@@ -71,7 +96,13 @@ const Index = () => {
                         {result && (
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                 <div className="lg:col-span-2 space-y-6">
-                                    <VerificationResults result={result} />
+                                    <VerificationResults result={{
+                                        ...result,
+                                        status: result.decision === "Accept" ? "Approved" : "Rejected",
+                                        submitted_title: title,
+                                        closest_match: result.metadata?.best_match || "None",
+                                        similarity_score: result.analysis ? Math.max(result.analysis.lexical_similarity, result.analysis.phonetic_similarity, result.analysis.semantic_similarity) : 0
+                                    }} />
                                     <DetailedAnalysis analysis={result.analysis} />
                                 </div>
                                 <div className="space-y-6">

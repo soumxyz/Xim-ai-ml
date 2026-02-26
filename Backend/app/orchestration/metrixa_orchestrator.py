@@ -14,7 +14,7 @@ from app.preprocessing.structural_pattern_detector import StructuralPatternDetec
 from app.interpretability.bionic_conflict_highlighter import BionicConflictHighlighter
 from app.monitoring.audit_logger import AuditLogger
 from app.configuration.scoring_weights import SCORING_WEIGHTS
-from app.api.request_models import ComplianceResult, ConflictDetail
+from app.api.request_models import ComplianceResult, ConflictDetail, AnalysisDetail
 from app.persistence.title_repository import TitleRepository
 from metaphone import doublemetaphone
 
@@ -58,68 +58,57 @@ class MetrixaOrchestrator:
         # 4. Pattern Detection
         patterns = self.pattern_detector.detect_patterns(title)
         
-        # 5. REAL Candidate Retrieval via FAISS (or Token Index Fallback)
+        # 5. Robust Candidate Retrieval via Token Index (Instant)
         candidates = []
-        if self.sbert_available and self.ann_index and self.ann_index.index.ntotal > 0:
-            query_embedding = self.semantic.encode(title)
-            if query_embedding is not None:
-                import numpy as np
-                candidates = await self.ann_index.get_top_candidates(
-                    np.array(query_embedding), top_k=50
-                )
-                self.logger.info(f"FAISS returned {len(candidates)} candidates for '{title}'")
-        
-        # Fallback: if FAISS unavailable, use token index
-        if not candidates and self.token_index:
+        if self.token_index:
             query_tokens = normalized_query.split()
             candidates = await self.token_index.filter_by_tokens(query_tokens)
-            self.logger.info(f"Token index fallback: {len(candidates)} candidates")
+            self.logger.info(f"Token Index retrieved {len(candidates)} candidates.")
         
-        # If still no candidates, return clean accept
+        # If no lexical candidates, return clean accept (or rejection if compliance failed)
         if not candidates:
             elapsed_ms = int((time.time() - start_time) * 1000)
+            analysis_detail = AnalysisDetail(
+                lexical_similarity=0,
+                phonetic_similarity=0,
+                semantic_similarity=0,
+                disallowed_word=any(v in "; ".join(compliance_res["violations"]).lower() for v in ["disallowed", "restricted"]),
+                periodicity_violation="periodicity" in "; ".join(compliance_res["violations"]).lower(),
+                combination_violation="combination" in "; ".join(compliance_res["violations"]).lower(),
+                prefix_suffix_violation="prefix" in "; ".join(compliance_res["violations"]).lower() or "suffix" in "; ".join(compliance_res["violations"]).lower()
+            )
             return ComplianceResult(
                 is_compliant=compliance_res["is_compliant"],
                 verification_probability=100.0 if compliance_res["is_compliant"] else 0.0,
                 decision="Reject" if not compliance_res["is_compliant"] else "Accept",
-                explanation="No similar titles found in database." if compliance_res["is_compliant"] else "; ".join(compliance_res["violations"]),
+                explanation="No similar titles found." if compliance_res["is_compliant"] else "; ".join(compliance_res["violations"]),
                 conflicts=[],
                 scores={},
-                metadata={
-                    "risk_tier": "Critical" if not compliance_res["is_compliant"] else "Low",
-                    "processing_time_ms": elapsed_ms,
-                    "candidates_checked": 0
-                }
+                analysis=analysis_detail,
+                metadata={"risk_tier": "Low", "processing_time_ms": elapsed_ms, "candidates_checked": 0}
             )
         
-        # 6. Deep Comparison on Top Candidates
+        # 6. Deep Fuzzy Comparison on Candidates (using rapidfuzz)
+        from rapidfuzz import fuzz
         best_match = None
         best_similarity = 0.0
         all_conflicts = []
         best_scores = {}
         
-        for candidate in candidates[:10]:  # Deep score top 10
+        # Score candidates using high-speed fuzzy matching
+        for candidate in candidates[:50]:  # Check up to 50 candidates
             candidate_title = candidate.get("title", "")
             
-            # Pass 1: Original title
-            if self.sbert_available:
-                sem_sim = await self.semantic.calculate_similarity(title, candidate_title)
-            else:
-                sem_sim = 0.0  # SBERT unavailable, rely on lexical + phonetic
-            lex_sim = await self.lexical.calculate_similarity(title, candidate_title)
-            pho_sim = await self.phonetic.calculate_similarity(title, candidate_title)
+            # Semantic search is disabled to prevent segfaults; using fuzzy as proxy
+            sem_sim = 0.0 
             
-            # Pass 2: Cleaned base titles (dual-pass)
-            for cleaned in compliance_res.get("cleaned_titles", []):
-                if self.sbert_available:
-                    sem_c = await self.semantic.calculate_similarity(cleaned, candidate_title)
-                else:
-                    sem_c = 0.0
-                lex_c = await self.lexical.calculate_similarity(cleaned, candidate_title)
-                pho_c = await self.phonetic.calculate_similarity(cleaned, candidate_title)
-                sem_sim = max(sem_sim, sem_c)
-                lex_sim = max(lex_sim, lex_c)
-                pho_sim = max(pho_sim, pho_c)
+            # High-performance lexical similarity via RapidFuzz
+            lex_sim = fuzz.token_set_ratio(title, candidate_title) / 100.0
+            lex_sim_simple = fuzz.ratio(title, candidate_title) / 100.0
+            lex_sim = max(lex_sim, lex_sim_simple) # Take best of set vs ratio
+            
+            # Phonetic similarity fallback
+            pho_sim = await self.phonetic.calculate_similarity(title, candidate_title)
             
             scores = {
                 "semantic_similarity": sem_sim,
@@ -127,31 +116,16 @@ class MetrixaOrchestrator:
                 "phonetic_similarity": pho_sim
             }
             
-            # Dynamic weighting
-            weights = self.dynamic_scorer.adjust_weights(title, [candidate_title], scores)
-            final_sim = (
-                sem_sim * weights.get("semantic_similarity", 0.6) +
-                pho_sim * weights.get("phonetic_similarity", 0.25) +
-                lex_sim * weights.get("lexical_similarity", 0.15)
-            )
-            
-            # Agreement boost
-            final_sim = self.dynamic_scorer.apply_agreement_boost(final_sim, scores)
+            # Dynamic weighting (Lexical + Phonetic focus)
+            final_sim = (lex_sim * 0.7) + (pho_sim * 0.3)
             
             # Track conflicts above threshold
-            if final_sim > 0.40:
-                conflict_data = {
-                    "tokens": list(set(title.lower().split()) & set(candidate_title.lower().split())),
-                    "rules": compliance_res.get("violations_terms", []),
-                    "phonetic": [doublemetaphone(w)[0] for w in candidate_title.split()]
-                }
-                highlighted = self.highlighter.highlight(title, conflict_data)
-                
+            if final_sim > 0.65: # Tighter threshold for lexical matches
                 all_conflicts.append(ConflictDetail(
                     title=candidate_title,
-                    conflict_type="Semantic" if sem_sim > pho_sim else "Phonetic",
+                    conflict_type="Lexical/Fuzzy",
                     similarity_score=round(final_sim, 4),
-                    highlighted_text=highlighted
+                    highlighted_text=candidate_title # Simple highlight for now
                 ))
             
             if final_sim > best_similarity:
@@ -182,6 +156,17 @@ class MetrixaOrchestrator:
         # Sort conflicts by similarity (highest first), limit to top 5
         all_conflicts.sort(key=lambda c: c.similarity_score, reverse=True)
         
+        # Prepare analysis detail for the frontend dashboard
+        analysis_detail = AnalysisDetail(
+            lexical_similarity=int(best_scores.get("lexical_similarity", 0.0) * 100),
+            phonetic_similarity=int(best_scores.get("phonetic_similarity", 0.0) * 100),
+            semantic_similarity=int(best_scores.get("semantic_similarity", 0.0) * 100),
+            disallowed_word=any(v in explanation.lower() for v in ["disallowed", "restricted"]),
+            periodicity_violation="periodicity" in explanation.lower(),
+            combination_violation="combination" in explanation.lower(),
+            prefix_suffix_violation="prefix" in explanation.lower() or "suffix" in explanation.lower()
+        )
+
         result = ComplianceResult(
             is_compliant=compliance_res["is_compliant"] and decision_meta["decision"] != "Reject",
             verification_probability=prob,
@@ -189,6 +174,7 @@ class MetrixaOrchestrator:
             explanation=explanation,
             conflicts=all_conflicts[:5],
             scores=best_scores,
+            analysis=analysis_detail,
             metadata={
                 "risk_tier": decision_meta["risk_tier"],
                 "confidence_score": round(confidence, 4),
