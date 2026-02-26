@@ -1,7 +1,21 @@
+import json
+import os
+
 class PrefixSuffixValidator:
     def __init__(self):
         self.restricted_prefixes = ["test-", "prod-"]
         self.restricted_suffixes = ["-beta", "-dev"]
+        
+        json_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'restricted_terms.json')
+        try:
+            with open(json_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                if "restricted_prefix_suffix" in data:
+                    terms = [t.lower() for t in data["restricted_prefix_suffix"]]
+                    self.restricted_prefixes.extend(terms)
+                    self.restricted_suffixes.extend(terms)
+        except Exception:
+            pass
 
     async def check(self, title: str) -> dict:
         title_lower = title.lower()
