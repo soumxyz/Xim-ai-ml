@@ -15,9 +15,9 @@ const Navbar = ({ darkMode, onToggleDarkMode }) => {
                         variant="ghost"
                         size="icon"
                         onClick={onToggleDarkMode}
-                        className="rounded-lg"
+                        className="rounded-lg text-foreground hover:text-foreground hover:bg-muted"
                     >
-                        {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                        {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                     </Button>
                 </div>
             </div>

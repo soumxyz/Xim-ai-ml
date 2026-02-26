@@ -30,13 +30,27 @@ const HeroSection = ({ title, onTitleChange, onVerify, isLoading }) => {
                             onChange={(e) => onTitleChange(e.target.value)}
                             onKeyDown={handleKeyDown}
                             placeholder="Enter newspaper title to verify..."
-                            className="pl-10 h-12 bg-card border-border text-foreground placeholder:text-muted-foreground rounded-full shadow-sm"
+                            className="pl-10 h-12 rounded-full text-foreground placeholder:text-muted-foreground"
+                            style={{
+                                background: "rgba(255,255,255,0.15)",
+                                backdropFilter: "blur(14px)",
+                                WebkitBackdropFilter: "blur(14px)",
+                                border: "1px solid rgba(255,255,255,0.35)",
+                                boxShadow: "0 4px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.4)",
+                            }}
                         />
                     </div>
                     <Button
                         onClick={onVerify}
                         disabled={!title.trim() || isLoading}
-                        className="h-12 px-8 bg-primary text-primary-foreground hover:bg-navy-light font-semibold rounded-full shadow-sm"
+                        className="h-12 px-8 font-semibold rounded-full text-gray-900"
+                        style={{
+                            background: "rgba(250, 189, 42, 0.75)",
+                            backdropFilter: "blur(14px)",
+                            WebkitBackdropFilter: "blur(14px)",
+                            border: "1px solid rgba(252, 211, 77, 0.6)",
+                            boxShadow: "0 4px 24px rgba(250, 189, 42, 0.25), inset 0 1px 0 rgba(255,255,255,0.4)",
+                        }}
                     >
                         {isLoading ? (
                             <>

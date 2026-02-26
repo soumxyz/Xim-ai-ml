@@ -97,6 +97,18 @@ const Index = () => {
                         "radial-gradient(ellipse 100% 80% at 50% 100%, #000 50%, transparent 90%)",
                 }}
             />
+            {/* Dark-mode black grid background */}
+            <div
+                className="absolute inset-0 z-0 hidden dark:block"
+                style={{
+                    background: "#000000",
+                    backgroundImage: `
+                        linear-gradient(to right, rgba(75, 85, 99, 0.4) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(75, 85, 99, 0.4) 1px, transparent 1px)
+                    `,
+                    backgroundSize: "40px 40px",
+                }}
+            />
             <div className="relative z-10">
                 <Navbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} />
 
