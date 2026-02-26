@@ -21,8 +21,9 @@ class NormalizationPipeline:
         # Lowercase
         text = text.lower()
         
-        # Remove special characters and punctuation
-        text = re.sub(r'[^a-z0-9\s]', '', text)
+        # Remove special characters and punctuation, replacing them with a space
+        # This prevents Unicode squish-bypass (e.g. 'Hindustan\u202DTimes' -> 'Hindustantimes')
+        text = re.sub(r'[^a-z0-9\s]', ' ', text)
         
         # Tokenize and remove stopwords
         tokens = text.split()

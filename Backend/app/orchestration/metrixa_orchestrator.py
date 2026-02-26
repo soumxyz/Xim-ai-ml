@@ -1,4 +1,5 @@
 import logging
+import unicodedata
 import time
 from app.preprocessing.normalization_pipeline import NormalizationPipeline
 from app.compliance.compliance_engine import ComplianceEngine
@@ -17,11 +18,13 @@ from app.monitoring.audit_logger import AuditLogger
 from app.configuration.scoring_weights import SCORING_WEIGHTS
 from app.api.request_models import ComplianceResult, ConflictDetail, AnalysisDetail
 from app.persistence.title_repository import TitleRepository
+from app.preprocessing.transliteration_normalizer import TransliterationNormalizer
 from metaphone import doublemetaphone
 
 class MetrixaOrchestrator:
     def __init__(self, ann_index=None, token_index=None, sbert_available=False):
         self.normalizer = NormalizationPipeline()
+        self.transliteration_normalizer = TransliterationNormalizer()
         self.compliance = ComplianceEngine()
         self.semantic = SemanticSimilarityEngine()
         self.lexical = LexicalSimilarityEngine()
@@ -95,7 +98,13 @@ class MetrixaOrchestrator:
         candidates = []
         if self.token_index:
             query_tokens = normalized_query.split()
-            candidates = await self.token_index.filter_by_tokens(query_tokens)
+            
+            # Tier 0.5: Transliteration Normalization
+            # We search the index using BOTH original tokens and flattened transliterations to guarantee candidate hit
+            transliterated_query = self.transliteration_normalizer.normalize(normalized_query)
+            all_search_tokens = list(set(query_tokens + transliterated_query.split()))
+            
+            candidates = await self.token_index.filter_by_tokens(all_search_tokens)
             self.logger.info(f"Token Index retrieved {len(candidates)} candidates.")
         
         # If no lexical candidates, return clean accept (or rejection if compliance failed)
@@ -137,27 +146,36 @@ class MetrixaOrchestrator:
         w_sem = 0.1 # Base semantic weight for cluster/MiniLM
         
         # Score candidates
+        query_norm = self.transliteration_normalizer.normalize(title)
+        
         for candidate in candidates[:50]:
             candidate_title = candidate.get("title", "")
             
-            query_lower = title.strip().lower()
-            cand_lower = candidate_title.strip().lower()
+            # Apply NFKC Unicode Normalization to protect against invisible characters
+            query_lower = unicodedata.normalize('NFKC', title).strip().lower()
+            cand_lower = unicodedata.normalize('NFKC', candidate_title).strip().lower()
+            cand_norm = self.transliteration_normalizer.normalize(candidate_title)
             
             # Semantic (Concept Clusters)
-            sem_sim = calculate_concept_similarity(query_lower, cand_lower)
+            sem_sim = calculate_concept_similarity(query_norm, cand_norm)
             
-            # Lexical (Fuzzy Token Set)
-            lex_sim = fuzz.token_set_ratio(query_lower, cand_lower) / 100.0
+            # Lexical (Fuzzy Token Set) - Take max of original vs transliterated
+            lex_orig = fuzz.token_set_ratio(query_lower, cand_lower) / 100.0
+            lex_norm = fuzz.token_set_ratio(query_norm, cand_norm) / 100.0
+            lex_sim = max(lex_orig, lex_norm)
             
-            # Phonetic (Double Metaphone)
-            pho_sim = await self.phonetic.calculate_similarity(query_lower, cand_lower)
+            # Phonetic (Double Metaphone) - Take max of original vs transliterated
+            pho_orig = await self.phonetic.calculate_similarity(query_lower, cand_lower)
+            pho_norm = await self.phonetic.calculate_similarity(query_norm, cand_norm)
+            pho_sim = max(pho_orig, pho_norm)
+            
+            # Near-Duplicate Override
+            # If a strict deterministic match (> 0.95) exists, override the semantic penalty heavily.
+            if lex_sim > 0.95 and pho_sim > 0.95:
+                sem_sim = max(sem_sim, 0.95)
             
             # Blend score with Adaptive Weights
             final_sim = (lex_sim * w_lex) + (pho_sim * w_pho) + (sem_sim * w_sem)
-            
-            # Exact Match Bypass (Don't let semantic engine penalize exact strings)
-            if lex_sim == 1.0 and pho_sim == 1.0:
-                final_sim = 1.0
             
             scores = {
                 "semantic_similarity": sem_sim,

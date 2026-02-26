@@ -19,3 +19,4 @@ faiss-cpu
 python-levenshtein
 rapidfuzz
 pyahocorasick
+indic-transliteration
