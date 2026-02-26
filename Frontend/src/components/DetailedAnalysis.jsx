@@ -34,14 +34,9 @@ const DetailedAnalysis = ({ analysis }) => {
             <CardContent className="space-y-6">
                 {/* Dominant Risk Signal */}
                 {analysis && (
-                    <div className="p-3 rounded-lg bg-secondary/50 border border-border flex items-center gap-3">
-                        <div className="p-2 rounded-full bg-primary/20">
-                            <Brain className="w-4 h-4 text-primary" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Primary Risk Signal</p>
-                            <p className="text-sm font-semibold text-foreground">{analysis.dominant_signal || "Multi-Factor Similarity"}</p>
-                        </div>
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-foreground">Primary Risk Signal</span>
+                        <span className="text-sm font-medium text-foreground">{analysis.dominant_signal || "Multi-Factor Similarity"}</span>
                     </div>
                 )}
 
