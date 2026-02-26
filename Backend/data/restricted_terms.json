@@ -1,0 +1,53 @@
+{
+  "obscene_adult": [
+    "porn", "xxx", "adult", "nude", "erotic", "escort",
+    "sex", "sexual", "camgirl", "onlyfans"
+  ],
+
+  "law_enforcement": [
+    "police", "cbi", "cid", "crime branch",
+    "investigation bureau", "narcotics bureau",
+    "intelligence bureau"
+  ],
+
+  "military_defense": [
+    "army", "navy", "air force", "defence ministry",
+    "military intelligence", "armed forces"
+  ],
+
+  "judiciary": [
+    "supreme court", "high court",
+    "chief justice", "judiciary"
+  ],
+
+  "government_authority": [
+    "prime minister", "president of india",
+    "governor", "parliament", "lok sabha",
+    "rajya sabha", "ministry of defence",
+    "ministry of home affairs"
+  ],
+
+  "fraud_misleading": [
+    "scam", "fraud", "fake", "hoax",
+    "official", "government approved",
+    "certified authority"
+  ],
+
+  "terror_extremism": [
+    "terror", "extremist", "isis",
+    "al qaeda", "militant"
+  ],
+
+  "restricted_prefix_suffix": [
+    "the official",
+    "national authority",
+    "government of india",
+    "central bureau"
+  ],
+
+  "periodicity_terms": [
+    "daily", "weekly", "monthly",
+    "morning", "evening", "sunday",
+    "saturday", "annual"
+  ]
+}

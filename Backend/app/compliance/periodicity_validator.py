@@ -1,9 +1,21 @@
 import ahocorasick
 import re
+import json
+import os
 
 class PeriodicityValidator:
     def __init__(self):
-        self.periodicity_terms = ["daily", "weekly", "monthly", "fortnightly", "annual"]
+        self.periodicity_terms = []
+        json_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'restricted_terms.json')
+        
+        try:
+            with open(json_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                if "periodicity_terms" in data:
+                    self.periodicity_terms = [t.lower() for t in data["periodicity_terms"]]
+        except Exception:
+            self.periodicity_terms = ["daily", "weekly", "monthly", "fortnightly", "annual"]
+            
         self.automaton = ahocorasick.Automaton()
         for term in self.periodicity_terms:
             self.automaton.add_word(term, term)
