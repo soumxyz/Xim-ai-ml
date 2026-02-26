@@ -1,7 +1,7 @@
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const Navbar = ({ darkMode, onToggleDarkMode, highContrast, onToggleHighContrast }) => {
+const Navbar = ({ darkMode, onToggleDarkMode, highContrast, onToggleHighContrast, talkBack, onToggleTalkBack }) => {
     return (
         <nav className="border-b border-border/50 bg-card/70 backdrop-blur-xl backdrop-saturate-150 sticky top-0 z-50">
             <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
@@ -11,6 +11,19 @@ const Navbar = ({ darkMode, onToggleDarkMode, highContrast, onToggleHighContrast
                 </div>
 
                 <div className="flex items-center gap-3">
+                    {/* TalkBack toggle */}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={onToggleTalkBack}
+                        title={talkBack ? "Disable TalkBack" : "Enable TalkBack (click-to-speak)"}
+                        className={`rounded-lg hover:bg-muted transition-colors ${talkBack ? "text-amber-500" : "text-foreground hover:text-foreground"}`}
+                        aria-label={talkBack ? "Disable TalkBack" : "Enable TalkBack"}
+                        aria-pressed={talkBack}
+                    >
+                        <Headphones className="w-5 h-5" />
+                    </Button>
+
                     {/* High contrast toggle switch */}
                     <button
                         type="button"
@@ -18,6 +31,7 @@ const Navbar = ({ darkMode, onToggleDarkMode, highContrast, onToggleHighContrast
                         title={highContrast ? "Disable high contrast" : "Enable high contrast"}
                         className="flex items-center gap-2 focus:outline-none"
                         aria-pressed={highContrast}
+                        aria-label="High contrast mode"
                     >
                         <span className="text-xs font-semibold text-muted-foreground select-none">HC</span>
                         <div
@@ -44,6 +58,7 @@ const Navbar = ({ darkMode, onToggleDarkMode, highContrast, onToggleHighContrast
                         variant="ghost"
                         size="icon"
                         onClick={onToggleDarkMode}
+                        aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
                         className="rounded-lg text-foreground hover:text-foreground hover:bg-muted"
                     >
                         {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -55,4 +70,3 @@ const Navbar = ({ darkMode, onToggleDarkMode, highContrast, onToggleHighContrast
 };
 
 export default Navbar;
-

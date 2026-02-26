@@ -6,7 +6,8 @@ import DetailedAnalysis from "@/components/DetailedAnalysis";
 import ExplanationPanel from "@/components/ExplanationPanel";
 import RecentChecks from "@/components/RecentChecks";
 import { getMockResult, recentChecks as initialChecks } from "@/lib/mockData";
-import { toast } from "sonner"; // Assuming sonner is available for error reporting
+import { toast } from "sonner";
+import { useTalkback, playTing } from "@/hooks/useTalkback";
 
 const Index = () => {
     const [title, setTitle] = useState("");
@@ -14,13 +15,48 @@ const Index = () => {
     const [result, setResult] = useState(null);
     const [darkMode, setDarkMode] = useState(false);
     const [highContrast, setHighContrast] = useState(false);
+    const [talkBack, setTalkBack] = useState(false);
     const [checks, setChecks] = useState(initialChecks);
     const resultsRef = useRef(null);
+
+    useTalkback(talkBack);
 
     useEffect(() => {
         document.documentElement.classList.toggle("dark", darkMode);
         document.documentElement.classList.toggle("high-contrast", highContrast);
     }, [darkMode, highContrast]);
+
+    // 4 rapid spacebar presses toggles TalkBack
+    useEffect(() => {
+        let count = 0;
+        let resetTimer = null;
+
+        const onKey = (e) => {
+            // Ignore spacebar in text inputs
+            const tag = e.target?.tagName?.toLowerCase();
+            if (tag === "input" || tag === "textarea") return;
+            if (e.code !== "Space") { count = 0; return; }
+
+            e.preventDefault();
+            count += 1;
+            clearTimeout(resetTimer);
+
+            if (count >= 4) {
+                count = 0;
+                setTalkBack((prev) => !prev);
+                return;
+            }
+
+            // Reset if no spacebar within 1s
+            resetTimer = setTimeout(() => { count = 0; }, 1000);
+        };
+
+        document.addEventListener("keydown", onKey);
+        return () => {
+            document.removeEventListener("keydown", onKey);
+            clearTimeout(resetTimer);
+        };
+    }, []);
 
     const handleTitleChange = (newTitle) => {
         setTitle(newTitle);
@@ -58,6 +94,7 @@ const Index = () => {
 
             // In fact, the backend now returns exactly what we need
             setResult(data);
+            if (talkBack) playTing();
 
             const newCheck = {
                 title: title,
@@ -117,6 +154,8 @@ const Index = () => {
                     onToggleDarkMode={() => setDarkMode(!darkMode)}
                     highContrast={highContrast}
                     onToggleHighContrast={() => setHighContrast(!highContrast)}
+                    talkBack={talkBack}
+                    onToggleTalkBack={() => setTalkBack(!talkBack)}
                 />
 
                 <main className="max-w-[1200px] mx-auto px-6">

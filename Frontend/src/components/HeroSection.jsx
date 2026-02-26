@@ -47,7 +47,7 @@ const HeroSection = ({ title, onTitleChange, onVerify, isLoading }) => {
         silenceTimerRef.current = setTimeout(() => {
             stopListening();
             verifyFn();
-        }, 3000);
+        }, 1000);
     };
 
     // Improved native Web Speech API — continuous, accumulates finals
