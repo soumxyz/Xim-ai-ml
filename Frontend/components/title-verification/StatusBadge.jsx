@@ -1,12 +1,7 @@
 import { Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface StatusBadgeProps {
-  status: 'Approved' | 'Rejected';
-  size?: 'sm' | 'md' | 'lg';
-}
-
-export function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
+export function StatusBadge({ status, size = 'md' }) {
   const isApproved = status === 'Approved';
 
   return (

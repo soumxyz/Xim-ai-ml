@@ -1,14 +1,9 @@
-import { VerificationResult } from '@/lib/types';
 import { ProbabilityVisualization } from './ProbabilityVisualization';
 import { DetailedAnalysisSection } from './DetailedAnalysisSection';
 import { AIExplanationPanel } from './AIExplanationPanel';
 import { StatusBadge } from './StatusBadge';
 
-interface VerificationResultsProps {
-  result: VerificationResult;
-}
-
-export function VerificationResults({ result }: VerificationResultsProps) {
+export function VerificationResults({ result }) {
   return (
     <section className="py-12 px-4">
       <div className="max-w-4xl mx-auto">

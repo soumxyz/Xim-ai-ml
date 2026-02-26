@@ -2,15 +2,10 @@
 
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { VerificationAnalysis } from '@/lib/types';
 import { AnalysisItem } from './AnalysisItem';
 import { cn } from '@/lib/utils';
 
-interface DetailedAnalysisSectionProps {
-  analysis: VerificationAnalysis;
-}
-
-export function DetailedAnalysisSection({ analysis }: DetailedAnalysisSectionProps) {
+export function DetailedAnalysisSection({ analysis }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (

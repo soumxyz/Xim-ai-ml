@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { verifyTitle } from '@/lib/mockApi';
-import { RecentCheck, VerificationResult } from '@/lib/types';
 import { TopNavBar } from '@/components/title-verification/TopNavBar';
 import { HeroSection } from '@/components/title-verification/HeroSection';
 import { VerificationResults } from '@/components/title-verification/VerificationResults';
@@ -10,12 +9,12 @@ import { RecentChecksPanel } from '@/components/title-verification/RecentChecksP
 
 export default function Home() {
   const [inputValue, setInputValue] = useState('');
-  const [results, setResults] = useState<VerificationResult | null>(null);
+  const [results, setResults] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [recentChecks, setRecentChecks] = useState<RecentCheck[]>([]);
-  const resultsRef = useRef<HTMLDivElement>(null);
+  const [recentChecks, setRecentChecks] = useState([]);
+  const resultsRef = useRef(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
 
@@ -25,7 +24,7 @@ export default function Home() {
       setResults(result);
 
       // Add to recent checks
-      const newCheck: RecentCheck = {
+      const newCheck = {
         id: Date.now().toString(),
         title: inputValue,
         status: result.status,

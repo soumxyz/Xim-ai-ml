@@ -1,14 +1,9 @@
 import { cn } from '@/lib/utils';
 
-interface ProbabilityVisualizationProps {
-  probability: number;
-  status: 'Approved' | 'Rejected';
-}
-
 export function ProbabilityVisualization({
   probability,
   status,
-}: ProbabilityVisualizationProps) {
+}) {
   const isApproved = status === 'Approved';
 
   return (

@@ -1,12 +1,7 @@
-import { RecentCheck } from '@/lib/types';
 import { StatusBadge } from './StatusBadge';
 import { Clock } from 'lucide-react';
 
-interface RecentChecksPanelProps {
-  checks: RecentCheck[];
-}
-
-export function RecentChecksPanel({ checks }: RecentChecksPanelProps) {
+export function RecentChecksPanel({ checks }) {
   if (checks.length === 0) {
     return (
       <aside className="bg-card border border-border rounded-lg p-6">

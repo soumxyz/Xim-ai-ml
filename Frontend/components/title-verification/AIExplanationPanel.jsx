@@ -1,10 +1,6 @@
 import { Lightbulb } from 'lucide-react';
 
-interface AIExplanationPanelProps {
-  explanation: string;
-}
-
-export function AIExplanationPanel({ explanation }: AIExplanationPanelProps) {
+export function AIExplanationPanel({ explanation }) {
   return (
     <div className="border-2 border-primary/30 rounded-lg p-6 bg-card">
       <div className="flex gap-3">

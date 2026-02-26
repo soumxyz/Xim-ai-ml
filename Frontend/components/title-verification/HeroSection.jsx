@@ -1,18 +1,11 @@
 import { TitleInput } from './TitleInput';
 
-interface HeroSectionProps {
-  inputValue: string;
-  onInputChange: (value: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
-  isLoading: boolean;
-}
-
 export function HeroSection({
   inputValue,
   onInputChange,
   onSubmit,
   isLoading,
-}: HeroSectionProps) {
+}) {
   return (
     <section className="py-12 sm:py-16 px-4 text-center">
       <div className="max-w-2xl mx-auto">

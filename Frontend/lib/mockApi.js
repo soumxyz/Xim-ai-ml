@@ -1,5 +1,3 @@
-import { VerificationResult } from './types';
-
 const mockTitles = [
   { name: 'Morning Herald', category: 'existing' },
   { name: 'Daily Tribune', category: 'existing' },
@@ -24,10 +22,7 @@ const explanations = {
   ],
 };
 
-function calculateScores(
-  submittedTitle: string,
-  existingTitle: string
-): { lexical: number; phonetic: number; semantic: number } {
+function calculateScores(submittedTitle, existingTitle) {
   const submitted = submittedTitle.toLowerCase();
   const existing = existingTitle.toLowerCase();
 
@@ -61,7 +56,7 @@ function calculateScores(
   };
 }
 
-export async function verifyTitle(title: string): Promise<VerificationResult> {
+export async function verifyTitle(title) {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 900 + Math.random() * 300));
 

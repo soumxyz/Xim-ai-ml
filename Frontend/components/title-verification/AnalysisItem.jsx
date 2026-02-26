@@ -1,19 +1,12 @@
 import { Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface AnalysisItemProps {
-  label: string;
-  value: number | boolean;
-  isPercentage?: boolean;
-  isPassed?: boolean;
-}
-
 export function AnalysisItem({
   label,
   value,
   isPercentage = false,
   isPassed,
-}: AnalysisItemProps) {
+}) {
   const displayPassed = isPassed ?? (typeof value === 'number' ? value >= 50 : value);
   const displayValue = isPercentage ? `${value}%` : typeof value === 'boolean' ? '' : String(value);
 

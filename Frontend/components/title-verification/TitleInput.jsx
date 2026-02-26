@@ -1,18 +1,11 @@
 import { cn } from '@/lib/utils';
 
-interface TitleInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-  placeholder?: string;
-}
-
 export function TitleInput({
   value,
   onChange,
   disabled = false,
   placeholder = "Enter the newspaper title to verify",
-}: TitleInputProps) {
+}) {
   return (
     <div className="w-full">
       <input
