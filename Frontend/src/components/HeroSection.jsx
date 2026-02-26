@@ -1,6 +1,7 @@
 import { Search, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FlipWords } from "@/components/ui/flip-words";
 
 const HeroSection = ({ title, onTitleChange, onVerify, isLoading }) => {
     const handleKeyDown = (e) => {
@@ -9,11 +10,13 @@ const HeroSection = ({ title, onTitleChange, onVerify, isLoading }) => {
         }
     };
 
+    const flipWords = ["Similarity", "Compliance", "Originality"];
+
     return (
         <section className="py-40 md:py-48 text-center">
             <div className="max-w-2xl mx-auto space-y-6">
                 <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-tight" style={{ fontWeight: 700, letterSpacing: '-0.025em' }}>
-                    Title Similarity & Compliance<br />Validation System
+                    Title <FlipWords words={flipWords} duration={1500} /> Validation System
                 </h1>
                 <p className="text-muted-foreground text-base md:text-lg">
                     AI-powered Title Verification and Compliance System

@@ -45,22 +45,22 @@ const Index = () => {
             }
 
             const data = await response.json();
-            
+
             // Map backend score keys if they differ slightly from UI (already handled in orchestrator update)
             const apiResult = {
                 ...data,
                 submitted_title: title,
                 closest_match: data.metadata?.best_match || "None",
-                similarity_score: Math.round((1 - data.verification_probability/100) * 100) // Fallback calculation
+                similarity_score: Math.round((1 - data.verification_probability / 100) * 100) // Fallback calculation
             };
-            
+
             // In fact, the backend now returns exactly what we need
             setResult(data);
-            
+
             const newCheck = {
                 title: title,
-                status: data.decision === "Accept" ? "Approved" : 
-                        data.decision === "Manual Review" ? "Manual Review" : "Rejected",
+                status: data.decision === "Accept" ? "Approved" :
+                    data.decision === "Manual Review" ? "Manual Review" : "Rejected",
                 probability: data.verification_probability,
                 timestamp: "Just now"
             };
@@ -81,44 +81,61 @@ const Index = () => {
     };
 
     return (
-        <div className="min-h-screen bg-background">
-            <Navbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} />
+        <div className="min-h-screen bg-white dark:bg-background relative">
+            {/* Light-mode diagonal cross grid background */}
+            <div
+                className="absolute inset-0 z-0 dark:hidden"
+                style={{
+                    backgroundImage: `
+                        linear-gradient(45deg, transparent 49%, #e5e7eb 49%, #e5e7eb 51%, transparent 51%),
+                        linear-gradient(-45deg, transparent 49%, #e5e7eb 49%, #e5e7eb 51%, transparent 51%)
+                    `,
+                    backgroundSize: "40px 40px",
+                    WebkitMaskImage:
+                        "radial-gradient(ellipse 100% 80% at 50% 100%, #000 50%, transparent 90%)",
+                    maskImage:
+                        "radial-gradient(ellipse 100% 80% at 50% 100%, #000 50%, transparent 90%)",
+                }}
+            />
+            <div className="relative z-10">
+                <Navbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} />
 
-            <main className="max-w-[1200px] mx-auto px-6">
-                <HeroSection
-                    title={title}
-                    onTitleChange={handleTitleChange}
-                    onVerify={handleVerify}
-                    isLoading={isLoading}
-                />
+                <main className="max-w-[1200px] mx-auto px-6">
+                    <HeroSection
+                        title={title}
+                        onTitleChange={handleTitleChange}
+                        onVerify={handleVerify}
+                        isLoading={isLoading}
+                    />
 
-                {(result || isLoading) && (
-                    <div ref={resultsRef} className="pb-16 space-y-6">
-                        {result && (
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                <div className="lg:col-span-2 space-y-6">
-                                    <VerificationResults result={{
-                                        ...result,
-                                        status: result.decision === "Accept" ? "Approved" : "Rejected",
-                                        submitted_title: title,
-                                        closest_match: result.metadata?.best_match || "None",
-                                        similarity_score: result.analysis ? Math.max(result.analysis.lexical_similarity, result.analysis.phonetic_similarity, result.analysis.semantic_similarity) : 0
-                                    }} />
-                                    <DetailedAnalysis analysis={{
-                                        ...result.analysis,
-                                        dominant_signal: result.metadata?.dominant_signal
-                                    }} />
+                    {(result || isLoading) && (
+                        <div ref={resultsRef} className="pb-16 space-y-6">
+                            {result && (
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    <div className="lg:col-span-2 space-y-6">
+                                        <VerificationResults result={{
+                                            ...result,
+                                            status: result.decision === "Accept" ? "Approved" : "Rejected",
+                                            submitted_title: title,
+                                            closest_match: result.metadata?.best_match || "None",
+                                            similarity_score: result.analysis ? Math.max(result.analysis.lexical_similarity, result.analysis.phonetic_similarity, result.analysis.semantic_similarity) : 0
+                                        }} />
+                                        <DetailedAnalysis analysis={{
+                                            ...result.analysis,
+                                            dominant_signal: result.metadata?.dominant_signal
+                                        }} />
+                                    </div>
+                                    <div className="space-y-6">
+                                        <ExplanationPanel explanation={result.explanation} />
+                                        {checks.length > 0 && <RecentChecks checks={checks} onClearAll={handleClearAll} />}
+                                    </div>
                                 </div>
-                                <div className="space-y-6">
-                                    <ExplanationPanel explanation={result.explanation} />
-                                    {checks.length > 0 && <RecentChecks checks={checks} onClearAll={handleClearAll} />}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
+                            )}
+                        </div>
+                    )}
 
-            </main>
+                </main>
+            </div>
         </div>
     );
 };
