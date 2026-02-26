@@ -8,6 +8,7 @@ numpy
 scikit-learn
 sentence-transformers
 phonetics
+metaphone
 nltk
 sqlalchemy
 databases[postgresql]
@@ -16,3 +17,5 @@ structlog
 python-json-logger
 faiss-cpu
 python-levenshtein
+rapidfuzz
+pyahocorasick

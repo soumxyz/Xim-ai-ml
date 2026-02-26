@@ -1,3 +1,5 @@
+import re
+
 class TitleCombinationDetector:
     def __init__(self):
         # In a real system, this would be a trie or a pre-computed token set

@@ -39,3 +39,27 @@ class SemanticSimilarityEngine:
         except Exception as e:
             self.logger.error(f"Semantic similarity calculation failed: {str(e)}")
             return 0.0
+
+    def encode(self, text: str):
+        """Encode a single title into a numpy embedding vector for FAISS."""
+        model = self.model
+        if model is None:
+            return None
+        try:
+            import numpy as np
+            return model.encode(text, convert_to_numpy=True).astype('float32')
+        except Exception as e:
+            self.logger.error(f"Encoding failed: {e}")
+            return None
+
+    def encode_batch(self, texts: list):
+        """Encode a batch of titles into numpy embedding vectors for FAISS."""
+        model = self.model
+        if model is None:
+            return None
+        try:
+            import numpy as np
+            return model.encode(texts, convert_to_numpy=True, show_progress_bar=True).astype('float32')
+        except Exception as e:
+            self.logger.error(f"Batch encoding failed: {e}")
+            return None
