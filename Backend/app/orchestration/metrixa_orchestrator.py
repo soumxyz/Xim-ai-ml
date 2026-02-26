@@ -11,6 +11,7 @@ from app.orchestration.explanation_builder import ExplanationBuilder
 from app.orchestration.dynamic_scoring import DynamicScoringModule
 from app.orchestration.confidence_scorer import ConfidenceScorer
 from app.preprocessing.structural_pattern_detector import StructuralPatternDetector
+from app.compliance.title_quality_validator import TitleQualityValidator
 from app.interpretability.bionic_conflict_highlighter import BionicConflictHighlighter
 from app.monitoring.audit_logger import AuditLogger
 from app.configuration.scoring_weights import SCORING_WEIGHTS
@@ -40,13 +41,45 @@ class MetrixaOrchestrator:
         self.dynamic_scorer = DynamicScoringModule()
         self.confidence_scorer = ConfidenceScorer()
         self.pattern_detector = StructuralPatternDetector()
+        self.quality_validator = TitleQualityValidator()
         self.audit_logger = AuditLogger()
         self.logger = logging.getLogger("metrixa")
 
     async def verify(self, title: str) -> ComplianceResult:
         start_time = time.time()
         
-        # 1. Normalize
+        # 1. Linguistic Quality Check (Gibberish/Numeric Detection)
+        is_low_quality, quality_violations, q_risk = self.quality_validator.validate(title)
+        if is_low_quality:
+            elapsed_ms = int((time.time() - start_time) * 1000)
+            analysis_detail = AnalysisDetail(
+                lexical_similarity=0, phonetic_similarity=0, semantic_similarity=0,
+                disallowed_word=False, periodicity_violation=False,
+                combination_violation=False, prefix_suffix_violation=False
+            )
+            
+            # Government Soft-Fail Logic for Borderline Linguistic Cases
+            prob = 50.0 if q_risk == "Medium" else 0.0
+            decision = "Manual Review" if q_risk == "Medium" else "Rejected"
+            
+            return ComplianceResult(
+                is_compliant=False,
+                verification_probability=prob,
+                decision=decision,
+                explanation=f"Linguistic Quality Failure: {'; '.join(quality_violations)}",
+                conflicts=[],
+                scores={},
+                analysis=analysis_detail,
+                metadata={
+                    "risk_tier": q_risk,
+                    "dominant_signal": "Linguistic Quality",
+                    "processing_time_ms": elapsed_ms,
+                    "candidates_checked": 0,
+                    "is_low_quality": True
+                }
+            )
+
+        # 2. Normalize
         normalized_query = self.normalizer.normalize(title)
         
         # 2. Fetch existing titles for combination detection
@@ -107,18 +140,24 @@ class MetrixaOrchestrator:
         for candidate in candidates[:50]:
             candidate_title = candidate.get("title", "")
             
-            # Tier 3: Semantic (Safe Concept Cluster Boost)
-            # Replaced torch-based MiniLM with stable Concept Clusters for ARM64 stability
-            sem_sim = calculate_concept_similarity(title, candidate_title)
+            query_lower = title.strip().lower()
+            cand_lower = candidate_title.strip().lower()
             
-            # High-performance lexical similarity
-            lex_sim = fuzz.token_set_ratio(title, candidate_title) / 100.0
+            # Semantic (Concept Clusters)
+            sem_sim = calculate_concept_similarity(query_lower, cand_lower)
             
-            # Phonetic similarity
-            pho_sim = await self.phonetic.calculate_similarity(title, candidate_title)
+            # Lexical (Fuzzy Token Set)
+            lex_sim = fuzz.token_set_ratio(query_lower, cand_lower) / 100.0
+            
+            # Phonetic (Double Metaphone)
+            pho_sim = await self.phonetic.calculate_similarity(query_lower, cand_lower)
             
             # Blend score with Adaptive Weights
             final_sim = (lex_sim * w_lex) + (pho_sim * w_pho) + (sem_sim * w_sem)
+            
+            # Exact Match Bypass (Don't let semantic engine penalize exact strings)
+            if lex_sim == 1.0 and pho_sim == 1.0:
+                final_sim = 1.0
             
             scores = {
                 "semantic_similarity": sem_sim,

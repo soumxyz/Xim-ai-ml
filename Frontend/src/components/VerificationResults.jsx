@@ -16,17 +16,15 @@ const VerificationResults = ({ result }) => {
                             <h2 className="text-lg font-semibold text-foreground">Verification Result</h2>
                             <Badge
                                 variant="outline"
-                                className={
-                                    isApproved
-                                        ? "border-success text-success bg-success/10"
-                                        : "border-destructive text-destructive bg-destructive/10"
-                                }
+                                className={`
+                                    ${isApproved ? "border-success text-success bg-success/10" : ""}
+                                    ${result.status === "Rejected" ? "border-destructive text-destructive bg-destructive/10" : ""}
+                                    ${result.status === "Manual Review" ? "border-yellow-500 text-yellow-600 bg-yellow-500/10" : ""}
+                                `}
                             >
-                                {isApproved ? (
-                                    <CheckCircle2 className="w-3 h-3 mr-1" />
-                                ) : (
-                                    <XCircle className="w-3 h-3 mr-1" />
-                                )}
+                                {isApproved && <CheckCircle2 className="w-3 h-3 mr-1" />}
+                                {result.status === "Rejected" && <XCircle className="w-3 h-3 mr-1" />}
+                                {result.status === "Manual Review" && <div className="w-2 h-2 rounded-full bg-yellow-500 mr-2" />}
                                 {result.status}
                             </Badge>
                             {result.metadata?.risk_tier && (

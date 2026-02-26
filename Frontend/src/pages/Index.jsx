@@ -59,7 +59,8 @@ const Index = () => {
             
             const newCheck = {
                 title: title,
-                status: data.decision === "Accept" ? "Approved" : "Rejected",
+                status: data.decision === "Accept" ? "Approved" : 
+                        data.decision === "Manual Review" ? "Manual Review" : "Rejected",
                 probability: data.verification_probability,
                 timestamp: "Just now"
             };

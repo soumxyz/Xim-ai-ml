@@ -2,10 +2,12 @@ const ProbabilityGauge = ({ probability, status }) => {
     const circumference = 2 * Math.PI * 54;
     const offset = circumference - (probability / 100) * circumference;
     
-    const getColor = (val) => {
-        if (val <= 33) return "rgb(239, 68, 68)";
-        if (val <= 66) return "rgb(234, 179, 8)";
-        return "rgb(34, 197, 94)";
+    const getColor = (prob, status) => {
+        if (status === "Manual Review") return "#EAB308"; // Yellow-500
+        if (prob >= 80) return "#10B981"; // Success Green
+        if (prob <= 33) return "rgb(239, 68, 68)"; // Red
+        if (prob <= 66) return "rgb(234, 179, 8)"; // Yellow
+        return "rgb(34, 197, 94)"; // Green (default for >66 and <80)
     };
 
     return (

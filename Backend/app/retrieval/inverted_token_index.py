@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 class InvertedTokenIndex:
     def __init__(self):
@@ -17,9 +17,13 @@ class InvertedTokenIndex:
                 self.index[token].append(title_id)
 
     async def filter_by_tokens(self, query_tokens: list) -> list:
-        candidate_ids = set()
+        candidate_counts = Counter()
         for token in query_tokens:
             if token in self.index:
-                candidate_ids.update(self.index[token])
+                for cid in self.index[token]:
+                    candidate_counts[cid] += 1
         
-        return [self.titles_map[cid] for cid in candidate_ids if cid in self.titles_map]
+        # Sort by match count (descending), then by ID string (ascending) for deterministic stability
+        sorted_cids = sorted(candidate_counts.keys(), key=lambda cid: (-candidate_counts[cid], str(cid)))
+        
+        return [self.titles_map[cid] for cid in sorted_cids if cid in self.titles_map]
