@@ -15,12 +15,14 @@ const HeroSection = ({ title, onTitleChange, onVerify, isLoading }) => {
     const processorRef = useRef(null);
     const streamRef = useRef(null);
     const recognitionRef = useRef(null);
+    const silenceTimerRef = useRef(null);
 
     const handleKeyDown = (e) => {
         if (e.key === "Enter" && title.trim() && !isLoading) onVerify();
     };
 
     const stopListening = () => {
+        clearTimeout(silenceTimerRef.current);
         processorRef.current?.disconnect();
         audioCtxRef.current?.close();
         streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -38,21 +40,59 @@ const HeroSection = ({ title, onTitleChange, onVerify, isLoading }) => {
         setIsConnecting(false);
     };
 
-    // Fallback: browser-native Web Speech API
+    // After transcript arrives, wait 3s of silence then auto-verify
+    const scheduleAutoVerify = (text, verifyFn) => {
+        clearTimeout(silenceTimerRef.current);
+        if (!text.trim()) return;
+        silenceTimerRef.current = setTimeout(() => {
+            stopListening();
+            verifyFn();
+        }, 3000);
+    };
+
+    // Improved native Web Speech API — continuous, accumulates finals
     const startNativeSpeech = () => {
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SR) { alert("Voice input not supported in this browser."); return; }
         const r = new SR();
-        r.lang = "en-US";
+        r.lang = "en-IN";           // Indian English — better for local accents
         r.interimResults = true;
-        r.continuous = false;
+        r.continuous = true;        // keep mic open between phrases
+        r.maxAlternatives = 3;      // pick best of 3 alternatives
         recognitionRef.current = r;
+
+        let finalText = "";
+
         r.onstart = () => { setIsConnecting(false); setIsListening(true); };
-        r.onend = () => setIsListening(false);
-        r.onerror = () => setIsListening(false);
+        r.onend = () => {
+            // auto-restart unless user stopped manually
+            if (recognitionRef.current) {
+                try { r.start(); } catch { /* already stopped */ }
+            } else {
+                setIsListening(false);
+            }
+        };
+        r.onerror = (ev) => {
+            if (ev.error === "no-speech") return; // ignore silence
+            setIsListening(false);
+        };
         r.onresult = (e) => {
-            const t = Array.from(e.results).map((res) => res[0].transcript).join("");
-            onTitleChange(t);
+            let interim = "";
+            for (let i = e.resultIndex; i < e.results.length; i++) {
+                // pick highest-confidence alternative
+                let best = e.results[i][0].transcript;
+                for (let j = 1; j < e.results[i].length; j++) {
+                    if (e.results[i][j].confidence > e.results[i][0].confidence)
+                        best = e.results[i][j].transcript;
+                }
+                if (e.results[i].isFinal) {
+                    finalText += best + " ";
+                    scheduleAutoVerify(finalText.trim(), onVerify); // only on finals
+                } else {
+                    interim = best;
+                }
+            }
+            onTitleChange((finalText + interim).trim());
         };
         r.start();
     };
@@ -80,15 +120,27 @@ const HeroSection = ({ title, onTitleChange, onVerify, isLoading }) => {
             ws.onclose = () => setIsListening(false);
             ws.onmessage = (msg) => {
                 const data = JSON.parse(msg.data);
-                if (data.text) onTitleChange(data.text);
+                if (data.text) {
+                    onTitleChange(data.text);
+                    scheduleAutoVerify(data.text, onVerify);
+                }
             };
             ws.onopen = async () => {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                // High-quality audio constraints
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                        channelCount: 1,
+                        sampleRate: SAMPLE_RATE,
+                    }
+                });
                 streamRef.current = stream;
                 const audioCtx = new AudioContext({ sampleRate: SAMPLE_RATE });
                 audioCtxRef.current = audioCtx;
                 const source = audioCtx.createMediaStreamSource(stream);
-                const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+                const processor = audioCtx.createScriptProcessor(2048, 1, 1); // smaller buffer = lower latency
                 processorRef.current = processor;
                 processor.onaudioprocess = (e) => {
                     if (ws.readyState !== WebSocket.OPEN) return;
