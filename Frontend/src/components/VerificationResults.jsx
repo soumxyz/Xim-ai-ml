@@ -37,7 +37,7 @@ const VerificationResults = ({ result }) => {
                             <InfoRow label="Similarity Score" value={`${result.similarity_score}%`} />
                             <InfoRow
                                 label="Verification Probability"
-                                value={`${result.verification_probability}%`}
+                                value={`${parseFloat(result.verification_probability).toFixed(2)}%`}
                                 bold
                             />
                         </div>

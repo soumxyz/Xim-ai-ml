@@ -34,7 +34,7 @@ const ProbabilityGauge = ({ probability, status }) => {
                     />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-foreground">{probability}%</span>
+                    <span className="text-2xl font-bold text-foreground">{parseFloat(probability).toFixed(2)}%</span>
                     <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Probability</span>
                 </div>
             </div>
