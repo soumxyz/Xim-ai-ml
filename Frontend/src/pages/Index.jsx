@@ -19,6 +19,13 @@ const Index = () => {
         document.documentElement.classList.toggle("dark", darkMode);
     }, [darkMode]);
 
+    const handleTitleChange = (newTitle) => {
+        setTitle(newTitle);
+        if (!newTitle.trim()) {
+            setResult(null);
+        }
+    };
+
     const handleVerify = async () => {
         setIsLoading(true);
         setResult(null);
@@ -27,6 +34,15 @@ const Index = () => {
 
         const mockResult = getMockResult(title);
         setResult(mockResult);
+        
+        const newCheck = {
+            title: title,
+            status: mockResult.status,
+            probability: mockResult.verification_probability,
+            timestamp: "Just now"
+        };
+        setChecks((prev) => [newCheck, ...prev]);
+        
         setIsLoading(false);
 
         setTimeout(() => {
@@ -45,7 +61,7 @@ const Index = () => {
             <main className="max-w-[1200px] mx-auto px-6">
                 <HeroSection
                     title={title}
-                    onTitleChange={setTitle}
+                    onTitleChange={handleTitleChange}
                     onVerify={handleVerify}
                     isLoading={isLoading}
                 />
@@ -57,23 +73,16 @@ const Index = () => {
                                 <div className="lg:col-span-2 space-y-6">
                                     <VerificationResults result={result} />
                                     <DetailedAnalysis analysis={result.analysis} />
-                                    <ExplanationPanel explanation={result.explanation} />
                                 </div>
-                                <div>
-                                    <RecentChecks checks={checks} onClearAll={handleClearAll} />
+                                <div className="space-y-6">
+                                    <ExplanationPanel explanation={result.explanation} />
+                                    {checks.length > 0 && <RecentChecks checks={checks} onClearAll={handleClearAll} />}
                                 </div>
                             </div>
                         )}
                     </div>
                 )}
 
-                {!result && !isLoading && (
-                    <div className="pb-16">
-                        <div className="max-w-md mx-auto">
-                            <RecentChecks checks={checks} onClearAll={handleClearAll} />
-                        </div>
-                    </div>
-                )}
             </main>
         </div>
     );

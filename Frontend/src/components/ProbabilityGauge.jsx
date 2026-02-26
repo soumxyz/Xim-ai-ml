@@ -1,7 +1,12 @@
 const ProbabilityGauge = ({ probability, status }) => {
     const circumference = 2 * Math.PI * 54;
     const offset = circumference - (probability / 100) * circumference;
-    const isApproved = status === "Approved";
+    
+    const getColor = (val) => {
+        if (val <= 33) return "rgb(239, 68, 68)";
+        if (val <= 66) return "rgb(234, 179, 8)";
+        return "rgb(34, 197, 94)";
+    };
 
     return (
         <div className="flex flex-col items-center gap-3">
@@ -20,7 +25,7 @@ const ProbabilityGauge = ({ probability, status }) => {
                         cy="60"
                         r="54"
                         fill="none"
-                        stroke={isApproved ? "hsl(var(--success))" : "hsl(var(--destructive))"}
+                        stroke={getColor(probability)}
                         strokeWidth="8"
                         strokeLinecap="round"
                         strokeDasharray={circumference}

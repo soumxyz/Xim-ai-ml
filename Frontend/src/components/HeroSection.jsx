@@ -10,10 +10,10 @@ const HeroSection = ({ title, onTitleChange, onVerify, isLoading }) => {
     };
 
     return (
-        <section className="py-14 md:py-20 text-center">
+        <section className="py-40 md:py-48 text-center">
             <div className="max-w-2xl mx-auto space-y-6">
                 <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-tight" style={{ fontWeight: 700, letterSpacing: '-0.025em' }}>
-                    Title Similarity &<br />Compliance Validation System
+                    Title Similarity & Compliance<br />Validation System
                 </h1>
                 <p className="text-muted-foreground text-base md:text-lg">
                     AI-powered Title Verification and Compliance System
@@ -45,10 +45,6 @@ const HeroSection = ({ title, onTitleChange, onVerify, isLoading }) => {
                         )}
                     </Button>
                 </div>
-
-                <p className="text-xs text-muted-foreground">
-                    Checks similarity, rule violations, and approval probability
-                </p>
             </div>
         </section>
     );
