@@ -373,7 +373,7 @@ class MetrixaOrchestrator:
                 
                 # Re-score through the full pipeline (with _skip_suggestions=True)
                 scored = await self.suggestion_engine.rescore_and_filter(
-                    raw_candidates, self, min_probability=50.0, max_results=5
+                    raw_candidates, self, min_probability=10.0, max_results=5
                 )
                 
                 if scored:
@@ -387,7 +387,7 @@ class MetrixaOrchestrator:
                     ]
                     self.logger.info(f"Returning {len(suggestions_list)} verified suggestions")
                 else:
-                    self.logger.info("No suggestions met the 80% probability threshold")
+                    self.logger.info("No suggestions met the probability threshold")
                     
             except Exception as e:
                 self.logger.warning(f"Suggestion engine error: {e}")

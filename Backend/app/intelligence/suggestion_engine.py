@@ -254,12 +254,12 @@ class SuggestionEngine:
         self,
         candidates: List[Dict],
         orchestrator,
-        min_probability: float = 50.0,
+        min_probability: float = 10.0,
         max_results: int = 5,
     ) -> List[Dict]:
         """
         Runs each candidate through the full verification pipeline.
-        Only keeps candidates that get an 'Accept' decision.
+        Keeps candidates that get Accept or Review decisions above the threshold.
         """
         scored = []
 
@@ -270,8 +270,8 @@ class SuggestionEngine:
                 prob = result.verification_probability
                 decision = result.decision
 
-                # Only return suggestions that would actually be Accepted
-                if decision == "Accept" and prob >= min_probability:
+                # Return suggestions that are Accept or Review (better than the rejected original)
+                if decision in ("Accept", "Review") and prob >= min_probability:
                     scored.append({
                         "suggested_title": candidate["title"],
                         "verification_probability": round(prob, 2),
