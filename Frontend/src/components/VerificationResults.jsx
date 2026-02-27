@@ -3,6 +3,7 @@ import ProbabilityGauge from "./ProbabilityGauge";
 
 const VerificationResults = ({ result }) => {
     const isApproved = result.status === "Approved";
+    const suggestions = result.suggestions;
 
     return (
         <Card className="border-border bg-card shadow-sm">
@@ -30,6 +31,38 @@ const VerificationResults = ({ result }) => {
                                 bold
                             />
                         </div>
+
+                        {/* Suggestions Section */}
+                        {suggestions && suggestions.length > 0 && (
+                            <div className="mt-6 pt-5 border-t border-border">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <span className="text-xl">💡</span>
+                                    <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+                                        Suggested Alternatives
+                                    </h3>
+                                </div>
+                                <div className="space-y-3">
+                                    {suggestions.map((s, i) => (
+                                        <div
+                                            key={i}
+                                            className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50 transition-all hover:shadow-sm"
+                                        >
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-foreground truncate">
+                                                    {s.suggested_title}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground mt-0.5">
+                                                    {s.reason}
+                                                </p>
+                                            </div>
+                                            <span className="ml-3 flex-shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                                                ✓ {s.verification_probability}%
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Right: Gauge */}
@@ -53,3 +86,4 @@ const InfoRow = ({ label, value, bold }) => (
 );
 
 export default VerificationResults;
+

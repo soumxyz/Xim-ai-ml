@@ -20,6 +20,11 @@ class AnalysisDetail(BaseModel):
     combination_violation: bool
     prefix_suffix_violation: bool
 
+class SuggestionDetail(BaseModel):
+    suggested_title: str
+    verification_probability: float
+    reason: str  # e.g. "Replaced 'Morning' with cluster alternative 'Dawn'"
+
 class ComplianceResult(BaseModel):
     is_compliant: bool
     verification_probability: float
@@ -29,6 +34,7 @@ class ComplianceResult(BaseModel):
     scores: Dict[str, float]
     analysis: Optional[AnalysisDetail] = None
     metadata: Optional[Dict] = None
+    suggestions: Optional[List[SuggestionDetail]] = None
 
 class TitleSubmission(BaseModel):
     title: str

@@ -16,7 +16,8 @@ from app.compliance.title_quality_validator import TitleQualityValidator
 from app.interpretability.bionic_conflict_highlighter import BionicConflictHighlighter
 from app.monitoring.audit_logger import AuditLogger
 from app.configuration.scoring_weights import SCORING_WEIGHTS
-from app.api.request_models import ComplianceResult, ConflictDetail, AnalysisDetail
+from app.api.request_models import ComplianceResult, ConflictDetail, AnalysisDetail, SuggestionDetail
+from app.intelligence.suggestion_engine import SuggestionEngine
 from app.persistence.title_repository import TitleRepository
 from app.preprocessing.transliteration_normalizer import TransliterationNormalizer
 from metaphone import doublemetaphone
@@ -46,9 +47,10 @@ class MetrixaOrchestrator:
         self.pattern_detector = StructuralPatternDetector()
         self.quality_validator = TitleQualityValidator()
         self.audit_logger = AuditLogger()
+        self.suggestion_engine = SuggestionEngine()
         self.logger = logging.getLogger("metrixa")
 
-    async def verify(self, title: str) -> ComplianceResult:
+    async def verify(self, title: str, _skip_suggestions: bool = False) -> ComplianceResult:
         start_time = time.time()
         
         # 1. Linguistic Quality Check (Gibberish/Numeric Detection)
@@ -341,6 +343,58 @@ class MetrixaOrchestrator:
             prefix_suffix_violation="prefix" in explanation.lower() or "suffix" in explanation.lower()
         )
 
+        # 9.5. Suggestion Engine (only on Reject/Review, skip during re-scoring)
+        suggestions_list = None
+        if not _skip_suggestions and decision_meta["decision"] in ("Reject", "Review"):
+            try:
+                self.logger.info(f"Generating suggestions for rejected title: '{title}'")
+                
+                # Analyze what caused the conflict
+                conflict_dicts = [c.dict() for c in all_conflicts[:5]]
+                analysis = self.suggestion_engine.analyze_conflicts(
+                    title=title,
+                    conflicts=conflict_dicts,
+                    best_scores=best_scores,
+                    dominant_signal=dominant_signal,
+                    compliance_violations=compliance_res.get("violations", []),
+                )
+                
+                # Classify token risk
+                token_risks = self.suggestion_engine.classify_token_risk(
+                    title.split(), analysis
+                )
+                self.logger.info(f"Token risks: {token_risks}")
+                
+                # Generate candidates
+                raw_candidates = self.suggestion_engine.generate_candidates(
+                    title, analysis, token_risks
+                )
+                self.logger.info(f"Generated {len(raw_candidates)} raw suggestion candidates")
+                
+                # Re-score through the full pipeline (with _skip_suggestions=True)
+                scored = await self.suggestion_engine.rescore_and_filter(
+                    raw_candidates, self, min_probability=50.0, max_results=5
+                )
+                
+                if scored:
+                    suggestions_list = [
+                        SuggestionDetail(
+                            suggested_title=s["suggested_title"],
+                            verification_probability=s["verification_probability"],
+                            reason=s["reason"],
+                        )
+                        for s in scored
+                    ]
+                    self.logger.info(f"Returning {len(suggestions_list)} verified suggestions")
+                else:
+                    self.logger.info("No suggestions met the 80% probability threshold")
+                    
+            except Exception as e:
+                self.logger.warning(f"Suggestion engine error: {e}")
+                suggestions_list = None
+        
+        elapsed_ms = int((time.time() - start_time) * 1000)  # Recalculate to include suggestion time
+        
         result = ComplianceResult(
             is_compliant=compliance_res["is_compliant"] and decision_meta["decision"] != "Reject",
             verification_probability=round(prob, 2),
@@ -349,6 +403,7 @@ class MetrixaOrchestrator:
             conflicts=all_conflicts[:5],
             scores=best_scores,
             analysis=analysis_detail,
+            suggestions=suggestions_list,
             metadata={
                 "risk_tier": decision_meta["risk_tier"],
                 "dominant_signal": dominant_signal,
