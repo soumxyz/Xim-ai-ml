@@ -6,7 +6,7 @@ class TitleRepository:
     _titles_cache = None  # Class-level cache
 
     def __init__(self):
-        self.logger = logging.getLogger("metrixa")
+        self.logger = logging.getLogger("mesh")
         self.csv_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'sample_titles.csv')
         self.json_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'Database.json')
 

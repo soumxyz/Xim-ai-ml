@@ -1,4 +1,4 @@
-# Metrixa Compliance Core
+# Mesh Compliance Core
 
 Advanced title compliance and verification engine.
 

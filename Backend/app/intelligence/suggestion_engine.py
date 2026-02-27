@@ -1,5 +1,5 @@
 """
-Metrixa Suggestion Engine
+Mesh Suggestion Engine
 Generates compliant alternative titles when a submission is rejected or flagged.
 Uses conflict-aware token substitution, concept cluster intelligence,
 and full pipeline re-scoring to ensure suggestion quality.
@@ -17,7 +17,7 @@ from app.intelligence.concept_clusters import (
     get_cluster_alternatives,
 )
 
-logger = logging.getLogger("metrixa")
+logger = logging.getLogger("mesh")
 
 # ---------------------------------------------------------------------------
 # Safe word banks — vetted against restricted_terms.json

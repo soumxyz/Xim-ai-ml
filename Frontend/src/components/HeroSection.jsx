@@ -172,10 +172,10 @@ const HeroSection = ({ title, onTitleChange, onVerify, isLoading }) => {
                     className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-tight"
                     style={{ fontWeight: 700, letterSpacing: "-0.025em" }}
                 >
-                    Title <FlipWords words={flipWords} duration={1500} /> Validation System
+                    Title <FlipWords words={flipWords} duration={1500} /> Mesh Validation System
                 </h1>
                 <p className="text-muted-foreground text-base md:text-lg">
-                    AI-powered Title Verification and Compliance System
+                    AI-powered Title Verification and Mesh Compliance System
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto pt-4">

@@ -13,7 +13,7 @@ async def classify_article(request: ClassificationRequest, req: Request):
 
     Uses a TF-IDF + LinearSVC model trained on 209K+ HuffPost articles.
     """
-    logger = logging.getLogger("metrixa")
+    logger = logging.getLogger("mesh")
 
     classifier = getattr(req.app.state, "news_classifier", None)
     if classifier is None:

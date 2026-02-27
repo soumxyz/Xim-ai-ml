@@ -5,7 +5,7 @@ class IncrementalIndexManager:
     def __init__(self, ann_index, token_index):
         self.ann_index = ann_index
         self.token_index = token_index
-        self.logger = logging.getLogger("metrixa.indexing")
+        self.logger = logging.getLogger("mesh.indexing")
 
     def add_new_title(self, title_obj: dict):
         """

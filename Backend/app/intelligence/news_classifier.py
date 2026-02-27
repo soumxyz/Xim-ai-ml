@@ -11,7 +11,7 @@ import numpy as np
 import joblib
 
 
-logger = logging.getLogger("metrixa")
+logger = logging.getLogger("mesh")
 
 MODELS_DIR = os.path.join(os.path.dirname(__file__), "..", "models")
 

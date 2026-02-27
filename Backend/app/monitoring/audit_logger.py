@@ -4,7 +4,7 @@ from datetime import datetime
 
 class AuditLogger:
     def __init__(self):
-        self.logger = logging.getLogger("metrixa.audit")
+        self.logger = logging.getLogger("mesh.audit")
 
     def log_verification(self, title: str, result: dict):
         audit_entry = {

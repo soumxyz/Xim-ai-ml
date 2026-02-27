@@ -1,5 +1,5 @@
 """
-Metrixa Concept Cluster Dictionary
+Mesh Concept Cluster Dictionary
 Provides a lightweight semantic layer by mapping words to conceptual roots.
 Enabled without requiring heavy transformer models.
 """

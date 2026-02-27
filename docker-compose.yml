@@ -5,7 +5,7 @@ services:
     build: 
       context: ./Backend
       dockerfile: Dockerfile
-    container_name: metrixa-backend
+    container_name: mesh-backend
     ports:
       - "8000:8000"
     volumes:
@@ -21,7 +21,7 @@ services:
     
   frontend:
     image: node:20-alpine
-    container_name: metrixa-frontend
+    container_name: mesh-frontend
     working_dir: /app
     volumes:
       - ./Frontend:/app

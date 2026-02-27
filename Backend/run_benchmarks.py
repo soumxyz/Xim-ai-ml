@@ -1,5 +1,5 @@
 """
-Metrixa Performance & Accuracy Benchmark Suite
+Mesh Performance & Accuracy Benchmark Suite
 This script validates the system metrics to provide empirical proof for judges.
 """
 import asyncio
@@ -14,10 +14,10 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from app.persistence.title_repository import TitleRepository
 from app.retrieval.inverted_token_index import InvertedTokenIndex
-from app.orchestration.metrixa_orchestrator import MetrixaOrchestrator
+from app.orchestration.mesh_orchestrator import MeshOrchestrator
 
 async def run_benchmarks():
-    print("🚀 Starting Metrixa Technical Benchmark Suite...")
+    print("🚀 Starting Mesh Technical Benchmark Suite...")
     
     # --- SETUP ---
     repo = TitleRepository()
@@ -31,7 +31,7 @@ async def run_benchmarks():
     token_index.build_index(titles)
     
     # Initialize Orchestrator (Lexical Mode)
-    orchestrator = MetrixaOrchestrator(token_index=token_index, sbert_available=False)
+    orchestrator = MeshOrchestrator(token_index=token_index, sbert_available=False)
     
     # --- TEST 1: RECALL ON CONTROLLED VARIANTS ---
     print("\n🎯 Test 1: Measuring Recall on Controlled Variants...")
@@ -86,7 +86,7 @@ async def run_benchmarks():
     phonetic_hits = 0
     for p_query, p_target in phonetic_pairs:
         # We check if the phonetic similarity engine or general verification flags high score
-        # Since we use MetrixaOrchestrator, it will check against the whole 12k dataset
+        # Since we use MeshOrchestrator, it will check against the whole 12k dataset
         res = await orchestrator.verify(p_query)
         # Check if the intended target or any similar title is found
         if res.analysis and res.analysis.phonetic_similarity > 40:

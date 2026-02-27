@@ -19,5 +19,5 @@ Convert all inputs into a canonical Latin transliteration, flattening phonetic v
 - [ ] Create `TransliterationNormalizer` under `app/preprocessing/transliteration_normalizer.py`
 - [ ] Apply native Devanagari translation via `indic_transliteration`
 - [ ] Implement Phoneme Flattening mapping (`aa` -> `a`).
-- [ ] Integrate into `MetrixaOrchestrator.verify()`.
+- [ ] Integrate into `MeshOrchestrator.verify()`.
 - [ ] Add Transliteration variation detection to the Dynamic Explanation system.

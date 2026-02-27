@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request
 from app.api.request_models import VerificationRequest, ComplianceResult
-from app.orchestration.metrixa_orchestrator import MetrixaOrchestrator
+from app.orchestration.mesh_orchestrator import MeshOrchestrator
 
 router = APIRouter()
 
@@ -11,7 +11,7 @@ async def verify_title(request: VerificationRequest, req: Request):
     token_index = getattr(req.app.state, 'token_index', None)
     sbert_available = getattr(req.app.state, 'sbert_available', False)
     
-    orchestrator = MetrixaOrchestrator(
+    orchestrator = MeshOrchestrator(
         ann_index=ann_index,
         token_index=token_index,
         sbert_available=sbert_available

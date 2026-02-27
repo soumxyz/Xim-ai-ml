@@ -7,7 +7,7 @@ try:
 except ImportError:
     INDIC_LIB_AVAILABLE = False
 
-logger = logging.getLogger("metrixa")
+logger = logging.getLogger("mesh")
 
 class TransliterationNormalizer:
     def __init__(self):

@@ -12,7 +12,7 @@ async def submit_title(submission: TitleSubmission, req: Request):
     Accepts a verified title and adds it to the live index.
     Demonstrates the 'Pending Title Re-Index Trigger' flow.
     """
-    logger = logging.getLogger("metrixa")
+    logger = logging.getLogger("mesh")
     
     repo = TitleRepository()
     existing = await repo.get_all_titles()

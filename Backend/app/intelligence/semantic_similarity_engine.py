@@ -8,7 +8,7 @@ class SemanticSimilarityEngine:
 
     def __init__(self, model_name: str = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'):
         self.model_name = model_name
-        self.logger = logging.getLogger("metrixa")
+        self.logger = logging.getLogger("mesh")
 
     @property
     def model_and_tokenizer(self):

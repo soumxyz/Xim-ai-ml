@@ -22,7 +22,7 @@ from app.persistence.title_repository import TitleRepository
 from app.preprocessing.transliteration_normalizer import TransliterationNormalizer
 from metaphone import doublemetaphone
 
-class MetrixaOrchestrator:
+class MeshOrchestrator:
     def __init__(self, ann_index=None, token_index=None, sbert_available=False):
         self.normalizer = NormalizationPipeline()
         self.transliteration_normalizer = TransliterationNormalizer()
@@ -48,7 +48,7 @@ class MetrixaOrchestrator:
         self.quality_validator = TitleQualityValidator()
         self.audit_logger = AuditLogger()
         self.suggestion_engine = SuggestionEngine()
-        self.logger = logging.getLogger("metrixa")
+        self.logger = logging.getLogger("mesh")
 
     async def verify(self, title: str, _skip_suggestions: bool = False) -> ComplianceResult:
         start_time = time.time()

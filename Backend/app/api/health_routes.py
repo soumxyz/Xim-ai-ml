@@ -4,4 +4,4 @@ router = APIRouter()
 
 @router.get("/")
 async def health_check():
-    return {"status": "healthy", "service": "metrixa-compliance-core"}
+    return {"status": "healthy", "service": "mesh-compliance-core"}

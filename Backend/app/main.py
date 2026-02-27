@@ -11,7 +11,7 @@ from app.retrieval.inverted_token_index import InvertedTokenIndex
 from app.persistence.title_repository import TitleRepository
 
 app = FastAPI(
-    title="Metrixa Compliance Core",
+    title="Mesh Compliance Core",
     description="Advanced title compliance and verification engine (Lexical Mode)",
     version="2.1.0"
 )
@@ -34,8 +34,8 @@ app.state.sbert_available = False # Explicitly False to signal Lexical fallback
 @app.on_event("startup")
 async def startup_event():
     setup_logging()
-    logger = logging.getLogger("metrixa")
-    logger.info("=== Metrixa Compliance Core Startup (Lexical Mode) ===")
+    logger = logging.getLogger("mesh")
+    logger.info("=== Mesh Compliance Core Startup (Lexical Mode) ===")
     
     start_time = time.time()
     
@@ -64,7 +64,7 @@ app.include_router(health_routes.router, prefix="/health", tags=["Health"])
 @app.get("/")
 async def root():
     return {
-        "message": "Welcome to Metrixa Compliance Core API (Lexical Mode)",
+        "message": "Welcome to Mesh Compliance Core API (Lexical Mode)",
         "version": "2.1.0",
         "mode": "lexical",
         "stable": True,
