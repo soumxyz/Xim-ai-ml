@@ -65,7 +65,8 @@ const Index = () => {
         }
     };
 
-    const handleVerify = async () => {
+    const handleVerify = async (overrideTitle) => {
+        const verifyTitle = overrideTitle || title;
         setIsLoading(true);
         setResult(null);
 
@@ -75,7 +76,7 @@ const Index = () => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ title }),
+                body: JSON.stringify({ title: verifyTitle }),
             });
 
             if (!response.ok) {
@@ -97,7 +98,7 @@ const Index = () => {
             if (talkBack) playTing();
 
             const newCheck = {
-                title: title,
+                title: verifyTitle,
                 status: data.decision === "Accept" ? "Approved" :
                     data.decision === "Manual Review" ? "Manual Review" : "Rejected",
                 probability: data.verification_probability,
@@ -166,8 +167,53 @@ const Index = () => {
                         isLoading={isLoading}
                     />
 
+                    {/* Suggested Alternatives — directly below input */}
+                    {result?.suggestions && result.suggestions.length > 0 && (
+                        <div className="max-w-2xl mx-auto -mt-36 mb-8 relative z-20">
+                            <div
+                                className="rounded-2xl p-5 text-center"
+                                style={{
+                                    background: "rgba(255,255,255,0.06)",
+                                    backdropFilter: "blur(16px)",
+                                    WebkitBackdropFilter: "blur(16px)",
+                                    border: "1px solid rgba(255,255,255,0.15)",
+                                    boxShadow: "0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.1)",
+                                }}
+                            >
+                                <div className="flex items-center justify-center gap-2 mb-4">
+                                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                                        Suggested Alternatives
+                                    </h3>
+                                </div>
+                                <div className="flex flex-wrap items-center justify-center gap-2">
+                                    {result.suggestions.map((s, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() => {
+                                                setTitle(s.suggested_title);
+                                                handleVerify(s.suggested_title);
+                                            }}
+                                            className="text-sm text-foreground transition-all cursor-pointer hover:scale-105"
+                                            style={{
+                                                padding: "8px 18px",
+                                                borderRadius: "9999px",
+                                                background: "rgba(255,255,255,0.1)",
+                                                backdropFilter: "blur(14px)",
+                                                WebkitBackdropFilter: "blur(14px)",
+                                                border: "1px solid rgba(255,255,255,0.2)",
+                                                boxShadow: "0 2px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.15)",
+                                            }}
+                                        >
+                                            {s.suggested_title}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {(result || isLoading) && (
-                        <div ref={resultsRef} className="pb-16 space-y-6">
+                        <div ref={resultsRef} className="pb-6 space-y-6">
                             {result && (
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                     <div className="lg:col-span-2 space-y-6">

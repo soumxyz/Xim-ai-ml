@@ -21,7 +21,7 @@ const RecentChecks = ({ checks, onClearAll }) => {
                     </Button>
                 )}
             </CardHeader>
-            <CardContent className="space-y-0.5">
+            <CardContent className="space-y-0.5 overflow-y-auto max-h-[410px]">
                 {checks.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-8">
                         No recent verifications
