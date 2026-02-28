@@ -66,7 +66,7 @@ const Index = () => {
     };
 
     const handleVerify = async (overrideTitle) => {
-        const verifyTitle = overrideTitle || title;
+        const verifyTitle = (typeof overrideTitle === "string" ? overrideTitle : null) || title;
         setIsLoading(true);
         setResult(null);
 
